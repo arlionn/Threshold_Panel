@@ -671,7 +671,11 @@ function bundle THRESH_SETUP (const series endo,
         # Store information from b
         #-------------------------
         rhats[lreg,] = b.rhatCI
-        matrix lrstats[,lreg] = b.lrstat
+        if rows(b.lrstat) > rows(lrstats)
+            funcerr "b.lrstat exceeds row-dim. of lrstats"
+        else
+            matrix lrstats[1:rows(b.lrstat),lreg] = b.lrstat
+        endif        
         matrix lrprob[lreg] = b.lrprob					# bootstrap is done in first iteration phase
         matrix lrtest[lreg] = b.lrtest
         matrix lrcrit[lreg,] = b.lrcrit
