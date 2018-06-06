@@ -1,0 +1,216 @@
+Number of Firms:                 565
+Number of Years used:            14
+Total Observations:              7345
+Number of Quantiles:             20
+Confidence Level:                0.950000
+
+
+*********************************************
+
+
+Zero Threshold Model
+Sum of Squared Errors:           16.591220
+
+
+*********************************************
+
+
+Single Threshold Model
+
+Threshold Estimate:              0.023920
+Confidence Region:               0.004030   0.023920
+Sum of Squared Errors:           16.538484
+Trimming Percentage:             0.010000
+
+
+Thresholds0.023920   
+
+Regime-independent Coefficients   standard errors  het standard errors
+0.010552      0.000943      0.001915
+-0.000204      0.000026      0.000065
+0.000001      0.000000      0.000000
+-0.025746      0.004772      0.006820
+0.001537      0.001476      0.002005
+
+Regime- dependent Coefficients     standard errors  het standard errors
+0.062414      0.005502      0.013389
+0.088338      0.005522      0.011684
+
+
+LR Test for threshold effect:    23.420871
+
+
+Bootstrap Replication:     1.000000   3.515794
+Bootstrap Replication:     2.000000   3.764367
+Bootstrap Replication:     3.000000   2.110684
+Bootstrap Replication:     4.000000   2.305105
+Bootstrap Replication:     5.000000   3.254415
+Bootstrap Replication:     6.000000   3.746009
+Bootstrap Replication:     7.000000   7.823706
+Bootstrap Replication:     8.000000   6.251004
+Bootstrap Replication:     9.000000   3.198132
+Bootstrap Replication:     10.000000   14.337848
+Bootstrap Replication:     11.000000   4.933331
+Bootstrap Replication:     12.000000   3.087395
+Bootstrap Replication:     13.000000   6.645913
+Bootstrap Replication:     14.000000   6.746407
+Bootstrap Replication:     15.000000   7.602522
+Bootstrap Replication:     16.000000   7.606573
+Bootstrap Replication:     17.000000   2.048977
+Bootstrap Replication:     18.000000   8.810124
+Bootstrap Replication:     19.000000   3.389024
+Bootstrap Replication:     20.000000   3.259177
+
+
+Number of Bootstrap replications:20.000000
+Bootstrap p-value :              0.000000
+Critical Values:                 7.823706
+Critical Values:                 8.810124
+Critical Values:                 14.337848
+
+
+*********************************************
+
+
+Double Threshold Model
+Trimming Percentage:             0.010000
+
+First Iteration
+Fixed Thresholds:   
+0.023920   
+Threshold Estimate:              0.514530
+Confidence Region:               0.437000   0.640700
+Sum of Squared Errors:           16.513086
+Trimming Percentage:             0.010000
+
+
+Thresholds0.023920   0.514530   
+
+Regime-independent Coefficients   standard errors  het standard errors
+0.010444      0.000943      0.001891
+-0.000203      0.000026      0.000064
+0.000001      0.000000      0.000000
+-0.019730      0.005120      0.009049
+0.001601      0.001475      0.002061
+
+Regime- dependent Coefficients     standard errors  het standard errors
+0.065247      0.005567      0.013151
+0.093040      0.005707      0.010462
+0.055633      0.011539      0.030142
+
+
+LR Test for threshold effect:    11.297248
+
+
+Bootstrap Replication:     1.000000   18.926240
+Bootstrap Replication:     2.000000   2.791905
+Bootstrap Replication:     3.000000   6.317410
+Bootstrap Replication:     4.000000   3.212595
+Bootstrap Replication:     5.000000   8.305939
+Bootstrap Replication:     6.000000   4.836815
+Bootstrap Replication:     7.000000   3.114227
+Bootstrap Replication:     8.000000   8.282048
+Bootstrap Replication:     9.000000   1.913522
+Bootstrap Replication:     10.000000   3.031624
+Bootstrap Replication:     11.000000   2.274944
+Bootstrap Replication:     12.000000   2.386787
+Bootstrap Replication:     13.000000   1.380187
+Bootstrap Replication:     14.000000   3.745703
+Bootstrap Replication:     15.000000   4.242349
+Bootstrap Replication:     16.000000   2.579399
+Bootstrap Replication:     17.000000   1.340063
+Bootstrap Replication:     18.000000   2.212676
+Bootstrap Replication:     19.000000   8.163448
+Bootstrap Replication:     20.000000   11.404199
+
+
+Number of Bootstrap replications:20.000000
+Bootstrap p-value :              0.100000
+Critical Values:                 8.305939
+Critical Values:                 11.404199
+Critical Values:                 18.926240
+
+
+Second Iteration
+Fixed Thresholds:   
+0.514530   
+Threshold Estimate:              0.023920
+Confidence Region:               0.004030   0.023920
+Sum of Squared Errors:           16.513086
+Trimming Percentage:             0.010000
+
+
+Thresholds0.023920   0.514530   
+
+Regime-independent Coefficients   standard errors  het standard errors
+0.010444      0.000943      0.001891
+-0.000203      0.000026      0.000064
+0.000001      0.000000      0.000000
+-0.019730      0.005120      0.009049
+0.001601      0.001475      0.002061
+
+Regime- dependent Coefficients     standard errors  het standard errors
+0.065247      0.005567      0.013151
+0.093040      0.005707      0.010462
+0.055633      0.011539      0.030142
+
+
+
+
+*********************************************
+
+
+Triple Threshold Model
+Trimming Percentage:             0.050000
+
+Fixed Thresholds:   
+0.023920   0.514530   
+Threshold Estimate:              0.128980
+Confidence Region:               0.050170   0.640700
+Sum of Squared Errors:           16.509401
+Trimming Percentage:             0.050000
+
+
+Thresholds0.023920   0.128980   0.514530   
+
+Regime-independent Coefficients   standard errors  het standard errors
+0.010346      0.000946      0.001898
+-0.000201      0.000026      0.000064
+0.000001      0.000000      0.000000
+-0.018648      0.005195      0.009535
+0.001696      0.001477      0.002087
+
+Regime- dependent Coefficients     standard errors  het standard errors
+0.066177      0.005618      0.013356
+0.097283      0.006670      0.011731
+0.089693      0.006323      0.010597
+0.053323      0.011690      0.030873
+
+
+LR Test for threshold effect:    1.639055
+
+
+Bootstrap Replication:     1.000000   6.726470
+Bootstrap Replication:     2.000000   1.093025
+Bootstrap Replication:     3.000000   3.009958
+Bootstrap Replication:     4.000000   4.228026
+Bootstrap Replication:     5.000000   4.031552
+Bootstrap Replication:     6.000000   6.859476
+Bootstrap Replication:     7.000000   4.749956
+Bootstrap Replication:     8.000000   3.410065
+Bootstrap Replication:     9.000000   3.076235
+Bootstrap Replication:     10.000000   1.898588
+
+
+Number of Bootstrap replications:10.000000
+Bootstrap p-value :              0.900000
+Critical Values:                 6.726470
+Critical Values:                 6.859476
+Critical Values:                 6.859476
+
+
+
+
+*********************************************
+
+

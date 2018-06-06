@@ -1,0 +1,166 @@
+Number of Firms               565.00000 
+Number of Years used          14.000000 
+Total Observations            7345.0000 
+Number of Quantiles           400.00000 
+Confidence Level             0.95000000 
+
+
+*******************************************************
+
+
+Zero Threshold Model
+Sum of Squared Errors                          16.591220 
+
+
+*******************************************************
+
+
+Single Threshold Model
+
+Threshold Estimate          0.015700000 
+Confidence Region           0.013920000      0.018060000 
+Sum of Squared Errors         16.517795 
+Trimming Percentage         0.010000000 
+
+
+Thresholds
+     0.015700000 
+
+Regime-independent Coefficients, standard errors, het standard errors
+
+     0.010477561    0.00094180433     0.0019209862 
+  -0.00019973418   2.6384549e-005   6.5267054e-005 
+  1.0546255e-006   1.9897620e-007   4.5695562e-007 
+    -0.025445695     0.0047622210     0.0067847950 
+    0.0014242179     0.0014748465     0.0019797733 
+
+Regime-dependent Coefficients, standard errors, het standard errors
+
+     0.058868434     0.0056143147      0.013802960 
+     0.090423494     0.0054944182      0.011593318 
+
+
+LR Test for threshold effect         32.649894 
+Number of Bootstrap replications          3.0000000 
+Bootstrap p-value                        0.00000000 
+Critical Values   
+       8.3312169 
+       8.3312169 
+       8.3312169 
+
+
+*******************************************************
+
+
+Double Threshold Model
+Trimming Percentage         0.010000000 
+
+First Iteration
+Fixed Thresholds            0.015700000 
+Threshold Estimate           0.53616000 
+Confidence Region            0.53049000       0.56287000 
+Sum of Squared Errors         16.459979 
+Trimming Percentage         0.010000000 
+
+
+Thresholds
+     0.015700000       0.53616000 
+
+Regime-independent Coefficients, standard errors, het standard errors
+
+     0.010285143    0.00094105141     0.0018833187 
+  -0.00019753392   2.6344140e-005   6.3768397e-005 
+  1.0466549e-006   1.9864905e-007   4.4786653e-007 
+    -0.016489208     0.0050965786     0.0089750760 
+    0.0014806529     0.0014724173     0.0020687843 
+
+Regime-dependent Coefficients, standard errors, het standard errors
+
+     0.063153741     0.0056733464      0.013500229 
+     0.097725900     0.0056858777      0.010292374 
+     0.039209296      0.011847125      0.031114460 
+
+
+LR Test for threshold effect         25.799434 
+Number of Bootstrap replications          3.0000000 
+Bootstrap p-value                        0.00000000 
+Critical Values   
+       9.2919122 
+       9.2919122 
+       9.2919122 
+
+
+Second Iteration
+Fixed Thresholds             0.53616000 
+Threshold Estimate          0.015700000 
+Confidence Region           0.013920000      0.018060000 
+Sum of Squared Errors         16.459979 
+Trimming Percentage         0.010000000 
+
+
+Thresholds
+     0.015700000       0.53616000 
+
+Regime-independent Coefficients, standard errors, het standard errors
+
+     0.010285143    0.00094105141     0.0018833187 
+  -0.00019753392   2.6344140e-005   6.3768397e-005 
+  1.0466549e-006   1.9864905e-007   4.4786653e-007 
+    -0.016489208     0.0050965786     0.0089750760 
+    0.0014806529     0.0014724173     0.0020687843 
+
+Regime-dependent Coefficients, standard errors, het standard errors
+
+     0.063153741     0.0056733464      0.013500229 
+     0.097725900     0.0056858777      0.010292374 
+     0.039209296      0.011847125      0.031114460 
+
+
+
+
+*******************************************************
+
+
+Triple Threshold Model
+Trimming Percentage         0.050000000 
+
+Fixed Thresholds            0.015700000       0.53616000 
+Threshold Estimate           0.33134000 
+Confidence Region           0.039020000        1.0059300 
+Sum of Squared Errors         16.450614 
+Trimming Percentage         0.050000000 
+
+
+Thresholds
+     0.015700000       0.33134000       0.53616000 
+
+Regime-independent Coefficients, standard errors, het standard errors
+
+     0.010415077    0.00094317785     0.0019042279 
+  -0.00019993697   2.6367013e-005   6.4581881e-005 
+  1.0597885e-006   1.9871982e-007   4.5293815e-007 
+    -0.019438026     0.0053122527      0.010023220 
+    0.0015235240     0.0014722690     0.0020546923 
+
+Regime-dependent Coefficients, standard errors, het standard errors
+
+     0.061957491     0.0057047824      0.013721451 
+     0.095087507     0.0058413602      0.010421695 
+      0.11114170     0.0088886616      0.013622053 
+     0.044084479      0.012102114      0.032685571 
+
+
+LR Test for threshold effect         4.1814091 
+Number of Bootstrap replications          3.0000000 
+Bootstrap p-value                        0.66666667 
+Critical Values   
+       5.3516312 
+       5.3516312 
+       5.3516312 
+
+
+
+
+*******************************************************
+
+

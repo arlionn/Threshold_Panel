@@ -1,0 +1,2 @@
+
+var adlWallPaperLeft=830;
