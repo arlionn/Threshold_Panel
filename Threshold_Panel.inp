@@ -75,7 +75,7 @@ function matrix qqsel (matrix q "Col. vector",
                        matrix r "Col. vector")
     # Throws away those values of q which are in r
     # The resulting vector q will be smaller if in
-    # q are values which coincide with values in r.
+    # q some values coincide with values in r.
     C = sumr((q.=r))-1
     return selifr(q,C)
 end function
@@ -126,12 +126,13 @@ function bundle MODEL (matrix r,
     scalar nexo = nelem(exo)
     scalar nrexo = nelem(rexo)
     if maxc(r)==0						# Single threshold case
-        qq = qq1
+        qq = qq1        
         matrix rr = 0					# rr are the fixed thresholds
     else								# Multiple threshold case
         matrix rr = msortby(r,1)
         qq = qqsel(qq1,vec(rr))
     endif
+    
     sse = THR_SSE(endo,exo,rexo,thresh,strTF,qq,rr)
     rihat = iminc(sse)'
     matrix rhat = qq[rihat]							# Estimated threshold value
@@ -513,7 +514,7 @@ function bundle THRESH_SETUP (const series endo,
                               int qn[10::200] "Number of quantiles to examine",
                               int nrep[20::399] "Number of bootstrap replications",
                               matrix trim "percentage to trim data before search",
-                              scalar alpha[0.001:0.99:0.1] "Significance level of the threshold       test before computing the refinement estimate",
+                              scalar alpha[0.001:0.99:0.1] "Significance level of the threshold test before computing the refinement estimate",
                               scalar conf_lev[0.01:0.99:0.95] "confidence level for threshold")
     set warnings off
     if nelem(rexo)>1
@@ -586,13 +587,12 @@ function bundle THRESH_SETUP (const series endo,
     #----------------------
     # Set up the vector of
     # potential thresholds
-    #----------------------
-    dd = values(thresh)
-    qnt1 = qn*trim[1]
+    #----------------------    
+    dd = values(thresh)			# all unique values of realizations    
+    qnt1 = qn*trim[1]			# trim[i] = .01 --> percentage to trim before search
     scalar inc = 1/qn
-    scalar ende = qn-2*qnt1+1
     matrix sq = trim[1] + 1/qn*seq(0, (qn-2*qnt1+1)-1)'
-    qq1 = dd[floor(sq*rows(dd))]		# vector of quintile values
+    qq1 = dd[floor(sq*rows(dd))]		# vector of quintile values    
     qn1 = rows(qq1)						# number of quintiles
     cc = -2*ln(1-sqrt(conf_lev))
     if TF==0
@@ -648,6 +648,7 @@ function bundle THRESH_SETUP (const series endo,
     # Start threshold procedure
     #--------------------------
     loop lreg=1..nthresh -q		# Loop over specified # of max. thresholds
+
         #----------------------------------
         # FIRST ITERATION
         # Only for a double threshold model
@@ -656,7 +657,7 @@ function bundle THRESH_SETUP (const series endo,
         #-----------------------------------
         if lreg==1
             # Initial run assumes a zero threshold (updated/estimated later)
-            matrix rhats = zeros(nthresh,3)			# M1: (min~point~max) | M2: (min~point~max) | ...
+            matrix rhats = zeros(nthresh,3)				# M1: (min~point~max) | M2: (min~point~max) | ...
             matrix lrstats = zeros(rows(qq1),nthresh)	# Store likelihood ratio over potential thresholds for each model
         elif lreg>1
             sprintf stmp "%d", ($lreg-1)
@@ -671,11 +672,14 @@ function bundle THRESH_SETUP (const series endo,
         # Store information from b
         #-------------------------
         rhats[lreg,] = b.rhatCI
+        matrix lrstats[1:rows(b.lrstat),lreg] = b.lrstat
+        /* Check not needed
         if rows(b.lrstat) > rows(lrstats)
             funcerr "b.lrstat exceeds row-dim. of lrstats"
         else
             matrix lrstats[1:rows(b.lrstat),lreg] = b.lrstat
         endif        
+        */
         matrix lrprob[lreg] = b.lrprob					# bootstrap is done in first iteration phase
         matrix lrtest[lreg] = b.lrtest
         matrix lrcrit[lreg,] = b.lrcrit
@@ -696,7 +700,11 @@ function bundle THRESH_SETUP (const series endo,
         #------------
         # Print Model
         #------------
-        printout(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, strREXO, $lreg, 1, trim[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], TF)
+        printout(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, \
+          beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], \
+          SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, \
+          strREXO, $lreg, 1, trim[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], \
+          csdeptest[lreg+1,], sercorr[lreg+1,], TF)
         #---------------------------------------
         # SECOND ITERATION: Refinement estimate
         #---------------------------------------
@@ -723,7 +731,11 @@ function bundle THRESH_SETUP (const series endo,
             sercorr[lreg+1,] = b.sercorr
             SSE[1+lreg] = b.sse
             R2[1+lreg] = b.r2
-            printout(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, strREXO, $lreg, 2, trim[lreg], R2[1+lreg], DW[1+lreg],hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], TF)
+            printout(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, \
+              beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], \
+              SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, \
+              strREXO, $lreg, 2, trim[lreg], R2[1+lreg], DW[1+lreg],hettest[lreg+1,], \
+              csdeptest[lreg+1,], sercorr[lreg+1,], TF)
         endif
         # Add output to bundle
         OUT.beta_indep_T$lreg = beta_indep_T$lreg
