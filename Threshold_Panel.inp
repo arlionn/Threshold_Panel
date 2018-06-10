@@ -800,16 +800,11 @@ function void lrplot (matrix lrstats "Likelihood ratio (LR) test stats. for thre
             sprintf S2 "@fname/ThresholdPanel_CI_No=%d.png", $nplot
             fout = S2
         endif
-        if nplot==1
-            string S = "First "
-        elif nplot==2
-            string S = "Second "
-        endif
         plot mplot
             options with-lines fit=none single-yaxis
             #literal set term png font 'Helvetica,13'
-            literal set title 'Confidence Interval Construction: $nplot Threshold Model' font 'serif,13'
-            literal set xlabel '@S Threshold Parameter' font 'Helvetica,13'
+            printf "set title 'Confidence Interval Construction: %d Threshold Model' font 'serif,13'", cols(lrstats)
+            printf "set xlabel '%d Threshold Parameter' font 'Helvetica,13'", $nplot
             #literal set ylabel 'Likelihood Ratio' font 'Helvetica,13'
             literal set key outside below font 'Helvetica,13' #top right
             literal set y2tics

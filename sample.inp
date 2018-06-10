@@ -38,8 +38,8 @@ rename v4 debta
 # SET UP MODEL PARAMETERS
 #------------------------
 scalar nthresh = 2						# Max. # of thresholds to test, Hansen (1999) ntresh=3
-scalar qn = 100							# Hansen (1999) qn=400
-scalar nrep = 20						# Hansen (1999) nrep=300
+scalar qn = 400							# Hansen (1999) qn=400
+scalar nrep = 300						# Hansen (1999) nrep=300
 matrix trim = {0.01, 0.01}				# Hansen (1999) trim_1=0.01, trim_2=0.01, trim_3=0.05
 scalar alpha = 0.2						# 0<alpha<1: Choose a rather high value if you want definitely to estimate the refinement coefficient values
 scalar conf_lev = 0.95					# Hansen (1999) conf_lev=0.95 for LR-test on H0: gamma=gamma0
