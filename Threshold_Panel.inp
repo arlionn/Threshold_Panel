@@ -1,15 +1,15 @@
 # private functions
 
 function matrix R_EST (series endo,
-                       list exo,
-                       list rexo,
-                       series thresh,
-                       string strTF,
-                       matrix r "Vector of threshold values",
-                       scalar trim "Trimming percentage",
-                       matrix qq1,
-                       int qn1,
-                       int qn)
+      list exo,
+      list rexo,
+      series thresh,
+      string strTF,
+      matrix r "Vector of threshold values",
+      scalar trim "Trimming percentage",
+      matrix qq1,
+      int qn1,
+      int qn)
     if maxc(r) == 0
         qq = qq1
         matrix rr = 0
@@ -23,12 +23,12 @@ function matrix R_EST (series endo,
 end function
 
 function matrix THR_SSE (series endo,
-                         list exo,
-                         list rexo,
-                         series thresh,
-                         string strTF,
-                         matrix q,
-                         matrix r)
+      list exo,
+      list rexo,
+      series thresh,
+      string strTF,
+      matrix q,
+      matrix r)
     # This function estimates FE models
     # conditional on (eventually already)
     # estimated threshold(s) 'r' over all
@@ -50,20 +50,20 @@ function matrix THR_SSE (series endo,
             INT+=S$i
         endloop
         /* DEPRECATED
-        list D = null
-        list INT = null
-        if rows(rr)>1
-            matrix dd =  (thresh .< rr')
-            dd[,nr] = dd[,nr]-dd[,nr-1]
-            loop j=1..nr -q
-                series D$j = dd[,j]
-                D += D$j
-            endloop
-        else
-            series D1 = (thresh .< rr)
-            D += D1
-        endif
-        INT  = D ^ rexo
+           list D = null
+           list INT = null
+           if rows(rr)>1
+           matrix dd =  (thresh .< rr')
+           dd[,nr] = dd[,nr]-dd[,nr-1]
+           loop j=1..nr -q
+           series D$j = dd[,j]
+           D += D$j
+           endloop
+           else
+           series D1 = (thresh .< rr)
+           D += D1
+           endif
+           INT  = D ^ rexo
         */
         panel endo const exo INT --fixed-effects @strTF --quiet
         sse[qi] = $ess
@@ -72,7 +72,7 @@ function matrix THR_SSE (series endo,
 end function
 
 function matrix qqsel (matrix q "Col. vector",
-                       matrix r "Col. vector")
+      matrix r "Col. vector")
     # Throws away those values of q which are in r
     # The resulting vector q will be smaller if in
     # q some values coincide with values in r.
@@ -81,8 +81,8 @@ function matrix qqsel (matrix q "Col. vector",
 end function
 
 function matrix intvar (matrix r,
-                        matrix thresh,
-                        matrix rexo)
+      matrix thresh,
+      matrix rexo)
     # Construct interaction term
     matrix r = vec(r)
     r=msortby(r,1)
@@ -107,16 +107,16 @@ function matrix intvar (matrix r,
 end function
 
 function bundle MODEL (matrix r,
-                       scalar trim,
-                       int nrep,
-                       scalar qn,
-                       matrix qq1,
-                       scalar cc,
-                       series endo,
-                       list exo,
-                       list rexo,
-                       series thresh,
-                       string strTF "Time effects")
+      scalar trim,
+      int nrep,
+      scalar qn,
+      matrix qq1,
+      scalar cc,
+      series endo,
+      list exo,
+      list rexo,
+      series thresh,
+      string strTF "Time effects")
     set warnings off
     bundle mout
     nt = $nobs				# N*T
@@ -158,25 +158,25 @@ function bundle MODEL (matrix r,
         INT+=S$i
     endloop
     /*
-    list D = null
-    list INT = null
-    if rows(rrr)==1
-        series D1 = (thresh <= rrr[1])
-        series D0 = (thresh > rrr[1])
-        list D = D1 D0
-    elif rows(rrr)==2
-        series D1 = (thresh <= rrr[1])
-        series D0 = (thresh > rrr[1] && thresh <= rrr[2])
-        series D2 = (thresh > rrr[2])
-        list D = D1 D0 D2
-    endif
-    list INT = null
-    loop foreach j rexo -q
-        loop foreach k D -q
-            series $k_$j = $k * rexo.$j
-            INT+=$k_$j
-        endloop
-    endloop
+       list D = null
+       list INT = null
+       if rows(rrr)==1
+       series D1 = (thresh <= rrr[1])
+       series D0 = (thresh > rrr[1])
+       list D = D1 D0
+       elif rows(rrr)==2
+       series D1 = (thresh <= rrr[1])
+       series D0 = (thresh > rrr[1] && thresh <= rrr[2])
+       series D2 = (thresh > rrr[2])
+       list D = D1 D0 D2
+       endif
+       list INT = null
+       loop foreach j rexo -q
+       loop foreach k D -q
+       series $k_$j = $k * rexo.$j
+       INT+=$k_$j
+       endloop
+       endloop
     */
     # FE Model + OLS S.E.
     panel endo 0 exo INT --fixed-effects @strTF --quiet
@@ -234,28 +234,28 @@ function bundle MODEL (matrix r,
             list INT = rexo
         endif
         /* OLD but works
-        list Db = null
-        list INTb = null
-        if abs(maxc(rr))>0
-            if rows(rr)==1
-                series D1 = (thresh <= rr[1])
-                series D0 = (thresh > rr[1])
-                list Db = D1 D0
-            elif rows(rr)==2
-                series D1 = (thresh <= rr[1])
-                series D0 = (thresh > rr[1] && thresh <= rr[2])
-                series D2 = (thresh > rr[2])
-                list Db = D1 D0 D2
-            endif
-            loop foreach j rexo -q
-                loop foreach k Db -q
-                    series $k_$j = $k * rexo.$j
-                    INTb+=$k_$j
-                endloop
-            endloop
-        else
-            list INTb = rexo
-        endif
+           list Db = null
+           list INTb = null
+           if abs(maxc(rr))>0
+           if rows(rr)==1
+           series D1 = (thresh <= rr[1])
+           series D0 = (thresh > rr[1])
+           list Db = D1 D0
+           elif rows(rr)==2
+           series D1 = (thresh <= rr[1])
+           series D0 = (thresh > rr[1] && thresh <= rr[2])
+           series D2 = (thresh > rr[2])
+           list Db = D1 D0 D2
+           endif
+           loop foreach j rexo -q
+           loop foreach k Db -q
+           series $k_$j = $k * rexo.$j
+           INTb+=$k_$j
+           endloop
+           endloop
+           else
+           list INTb = rexo
+           endif
         */
         # Null model with previously determined thresholds (if any)
         panel endo 0 exo INT --fixed-effects @strTF --quiet
@@ -321,29 +321,29 @@ function bundle MODEL (matrix r,
 end function
 
 function void printout (matrix beta_indep,
-                        matrix sehet_indep,
-                        matrix sehomo_indep,
-                        matrix beta_dep,
-                        matrix sehet_dep,
-                        matrix sehomo_dep,
-                        matrix rhats,
-                        matrix sse,
-                        matrix lrt,
-                        matrix lrcrits,
-                        scalar lrprob,
-                        int nrep,
-                        strings strEXO,
-                        strings strREXO,
-                        int lreg,
-                        int iterat,
-                        scalar trim,
-                        scalar R2,
-                        scalar DW,
-                        matrix hettest,
-                        matrix csdeptest,
-                        matrix sercorr,
-                        scalar TF,
-                        scalar conf_level)
+      matrix sehet_indep,
+      matrix sehomo_indep,
+      matrix beta_dep,
+      matrix sehet_dep,
+      matrix sehomo_dep,
+      matrix rhats,
+      matrix sse,
+      matrix lrt,
+      matrix lrcrits,
+      scalar lrprob,
+      int nrep,
+      strings strEXO,
+      strings strREXO,
+      int lreg,
+      int iterat,
+      scalar trim,
+      scalar R2,
+      scalar DW,
+      matrix hettest,
+      matrix csdeptest,
+      matrix sercorr,
+      scalar TF,
+      scalar conf_level)
     set warnings off
     printf "\n"
     if TF==1
@@ -359,7 +359,7 @@ function void printout (matrix beta_indep,
         printf "%s\n", strTF
         printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
         printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100,\
-        minr(rhats[lreg,]), maxr(rhats[lreg,])
+          minr(rhats[lreg,]), maxr(rhats[lreg,])
     elif lreg==2
         printf "*******************************************************************************\n"
         printf "*************************\n"
@@ -371,13 +371,13 @@ function void printout (matrix beta_indep,
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg-1,2]
             printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
             printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100, \
-            minr(rhats[lreg,]), maxr(rhats[lreg,])
+              minr(rhats[lreg,]), maxr(rhats[lreg,])
         else
             printf "*** Second Iteration ***\n"
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg,2]
             printf "Threshold Estimate = %12.5f\n", rhats[lreg-1,2]
             printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100, \
-            minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
+              minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
         endif
     elif lreg==3
         printf "*******************************************************************************\n"
@@ -392,7 +392,7 @@ function void printout (matrix beta_indep,
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[1:lreg-1,2]'
             printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
             printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100, \
-            minr(rhats[lreg,]), maxr(rhats[lreg,])
+              minr(rhats[lreg,]), maxr(rhats[lreg,])
         else
             printf "*** Second Iteration ***\n"
         endif
@@ -462,17 +462,17 @@ function void printout (matrix beta_indep,
 end function
 
 function void linprintout (matrix beta_lin,
-                           matrix sehet_lin,
-                           matrix sehomo_lin,
-                           matrix sse,
-                           strings strEXO,
-                           strings strREXO,
-                           int TF,
-                           scalar R2,
-                           scalar DW,
-                           matrix hettest,
-                           matrix csdeptest,
-                           matrix sercorr)
+      matrix sehet_lin,
+      matrix sehomo_lin,
+      matrix sse,
+      strings strEXO,
+      strings strREXO,
+      int TF,
+      scalar R2,
+      scalar DW,
+      matrix hettest,
+      matrix csdeptest,
+      matrix sercorr)
     printf "\n"
     printf "***********************************\n"
     if TF==0
@@ -506,16 +506,16 @@ end function
 # public functions
 
 function bundle THRESH_SETUP (const series endo,
-                              const list exo,
-                              const list rexo,
-                              const series thresh,
-                              int nthresh[1:2:1] "Number of thresholds to test",
-                              int TF[0:1:0] "Time-effects: 0=NO, 1=YES",
-                              int qn[10::200] "Number of quantiles to examine",
-                              int nrep[20::399] "Number of bootstrap replications",
-                              matrix trim "percentage to trim data before search",
-                              scalar alpha[0.001:0.99:0.1] "Significance level of the threshold test before computing the refinement estimate",
-                              scalar conf_lev[0.01:0.99:0.95] "confidence level for threshold")
+      const list exo,
+      const list rexo,
+      const series thresh,
+      int nthresh[1:2:1] "Number of thresholds to test",
+      int TF[0:1:0] "Time-effects: 0=NO, 1=YES",
+      int qn[10::200] "Number of quantiles to examine",
+      int nrep[20::399] "Number of bootstrap replications",
+      matrix trim "percentage to trim data before search",
+      scalar alpha[0.001:0.99:0.1] "Significance level of the threshold test before computing the refinement estimate",
+      scalar conf_lev[0.01:0.99:0.95] "confidence level for threshold")
     set warnings off
     if nelem(rexo)>1
         printf "Sorry, but at the moment only a single regime-dependent variable \n           can be defined in the list named rexo. Please, re-specify your model.\n"
@@ -644,7 +644,7 @@ function bundle THRESH_SETUP (const series endo,
     # PRINTOUT LINEAR MODEL RESULTS
     #------------------------------
     linprintout(OUT.beta_lin, OUT.sehet_lin, OUT.sehomo_lin, SSE[1], strEXO,\
-    strREXO, TF, R2[1], DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
+      strREXO, TF, R2[1], DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
     #--------------------------
     # Start threshold procedure
     #--------------------------
@@ -710,7 +710,7 @@ function bundle THRESH_SETUP (const series endo,
             bundle b = MODEL(rhats[lreg,2],trim[lreg],0, qn, qq1, cc, endo,exo,rexo,thresh,strTF)
             if lrprob[lreg]<=alpha			# Only now update using the refinement estimate
                 rhats[lreg-1,] = b.rhatCI	# Refinement estimate of 1st threshold value
-                lrstats[,lreg-1] = b.lrstat # update the 1st threshold estimates
+                lrstats[1:rows(b.lrstat),lreg-1] = b.lrstat # update the 1st threshold estimates
             endif
             beta_indep_T$lreg = b.beta_regindep
             sehet_indep_T$lreg = b.sehet_regindep
@@ -782,8 +782,8 @@ function bundle THRESH_SETUP (const series endo,
 end function
 
 function void lrplot (matrix lrstats "Likelihood ratio (LR) test stats. for threshold.",
-                      matrix qq "Threshold values evaluated",
-                      string fname "Path + file name for storing graphs")
+      matrix qq "Threshold values evaluated",
+      string fname "Path + file name for storing graphs")
     
     # Asymptotic distribution of threshold estimate
     # "No-rejection region' of confidence level 1-alpha
