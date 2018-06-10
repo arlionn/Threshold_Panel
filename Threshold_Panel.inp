@@ -342,7 +342,8 @@ function void printout (matrix beta_indep,
                         matrix hettest,
                         matrix csdeptest,
                         matrix sercorr,
-                        scalar TF)
+                        scalar TF,
+                        scalar conf_level)
     set warnings off
     printf "\n"
     if TF==1
@@ -357,7 +358,8 @@ function void printout (matrix beta_indep,
         printf "*************************\n"
         printf "%s\n", strTF
         printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
-        printf "Confidence Region: \t MIN: %4.5f \t MAX: %4.5f\n", minr(rhats[lreg,]), maxr(rhats[lreg,])
+        printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100,\
+        minr(rhats[lreg,]), maxr(rhats[lreg,])
     elif lreg==2
         printf "*******************************************************************************\n"
         printf "*************************\n"
@@ -368,12 +370,14 @@ function void printout (matrix beta_indep,
             printf "*** First Iteration ***\n"
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg-1,2]
             printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
-            printf "Confidence Region: \t MIN: %4.5f \t MAX: %4.5f\n", minr(rhats[lreg,]), maxr(rhats[lreg,])
+            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100, \
+            minr(rhats[lreg,]), maxr(rhats[lreg,])
         else
             printf "*** Second Iteration ***\n"
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg,2]
             printf "Threshold Estimate = %12.5f\n", rhats[lreg-1,2]
-            printf "Confidence Region: \t MIN: %4.5f \t MAX: %4.5f\n", minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
+            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100, \
+            minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
         endif
     elif lreg==3
         printf "*******************************************************************************\n"
@@ -387,7 +391,8 @@ function void printout (matrix beta_indep,
             printf "*** First Iteration ***\n"
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[1:lreg-1,2]'
             printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
-            printf "Confidence Region: \t MIN: %4.5f \t MAX: %4.5f\n", minr(rhats[lreg,]), maxr(rhats[lreg,])
+            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n", conf_level*100, \
+            minr(rhats[lreg,]), maxr(rhats[lreg,])
         else
             printf "*** Second Iteration ***\n"
         endif
@@ -691,7 +696,7 @@ function bundle THRESH_SETUP (const series endo,
           beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], \
           SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, \
           strREXO, $lreg, 1, trim[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], \
-          csdeptest[lreg+1,], sercorr[lreg+1,], TF)
+          csdeptest[lreg+1,], sercorr[lreg+1,], TF, conf_lev)
         #---------------------------------------
         # SECOND ITERATION: Refinement estimate
         #---------------------------------------
@@ -723,7 +728,7 @@ function bundle THRESH_SETUP (const series endo,
               beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], \
               SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, \
               strREXO, $lreg, 2, trim[lreg], R2[1+lreg], DW[1+lreg],hettest[lreg+1,], \
-              csdeptest[lreg+1,], sercorr[lreg+1,], TF)
+              csdeptest[lreg+1,], sercorr[lreg+1,], TF, conf_lev)
         endif
         # Add output to bundle
         OUT.beta_indep_T$lreg = beta_indep_T$lreg
@@ -777,10 +782,8 @@ function bundle THRESH_SETUP (const series endo,
 end function
 
 function void lrplot (matrix lrstats "Likelihood ratio (LR) test stats. for threshold.",
-                      matrix lrcrit "Conf. regions for the threshold (gamma) parameters",
                       matrix qq "Threshold values evaluated",
                       string fname "Path + file name for storing graphs")
-    set warnings off
     
     # Asymptotic distribution of threshold estimate
     # "No-rejection region' of confidence level 1-alpha
@@ -828,6 +831,5 @@ function void lrplot (matrix lrstats "Likelihood ratio (LR) test stats. for thre
             literal set linetype 4 lc rgb "black" lw 2.0	# --- green
         end plot --output="@fout"
     endloop
-    set warnings on
 end function
 
