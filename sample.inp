@@ -12,8 +12,9 @@ include "/home/at/git/Threshold_Panel/Threshold_Panel.inp"
 #open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 open "/home/at/git/Threshold_Panel/ThresholdPanel_data_joe99.gdt" --quiet
 
-# *** IMPORTANT: You have to install (only the 1st time!) and
-# *** load this external package for old versions by hand! ***
+# *** Gretl versions starting with 2016d should handle this
+# *** automatically, but in case of problems please install
+# *** the "wooldridge_test_serial" package by hand.
 if $version >= 20164
     catch include wooldridge_test_serial.gfn
     if $error
