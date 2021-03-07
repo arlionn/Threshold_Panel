@@ -12,7 +12,7 @@ clear
 include Threshold_Panel.gfn
 open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 
-# Define a panel data set + provide meaningful series names
+# Define a panel dataset + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
 rename v1 inva
 rename v2 vala
@@ -21,7 +21,7 @@ rename v4 debta
 
 # Shrink dataset for illustration purpose only
 # Note: Using the complete sample takes a very long time
-smpl 1:01 25:15
+smpl 1:01 8:15
 
 # Set up the series of interest
 series vala2 = vala^2
@@ -37,24 +37,24 @@ list Lall = inva exo1 rexo1 thresh
 smpl Lall --balanced --no-missing
 
 
-# Run the procedure with default values
+# Run the procedure with values to minimize computation time
+bundle opts = _(nthresholds = 1,\
+                nboot = 99,
+                nquantiles = 100)
 set stopwatch
-bundle Model = estimate_tpm(inva, exo1, rexo1, thresh)
+bundle Model1 = estimate_tpm(inva, exo1, rexo1, thresh, opts)
 printf "\n This took %.2f seconds\n", $stopwatch
 
-print Model         # print bundle output
+print Model1         # print bundle output
 
 /* Plot the Likelihood Ratio test confidence interval jointly with the
 'no-rejection region' using the LR-statistic for tests on gamma. */
-plot_tpm(Model)
+plot_tpm(Model1)
 
 
 /* Activate optionally
-# Run the procedure with you own values
-bundle opts = _(nthresholds = 2,\
-                nboot = 199,\
-                confidence_level = 0.8)
-bundle Model2 = estimate_tpm(inva, exo1, rexo1, thresh, opts)
-
+# Run the procedure with default values
+bundle Model2 = estimate_tpm(inva, exo1, rexo1, thresh)
+print Model2
 plot_tpm(Model2)
 */
