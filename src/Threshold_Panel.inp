@@ -1,13 +1,13 @@
-function matrix R_EST (const series endo,
-                      const list exo,
-                      const list rexo,
-                      const series thresh,
-                      const string strTF,
-                      const matrix r "Vector of threshold values",
-                      scalar trim "Trimming percentage",
-                      const matrix qq1,
-                      int qn1,
-                      int qn)
+function matrix compute_optimal_threshold (const series endo,
+                                          const list exo,
+                                          const list rexo,
+                                          const series thresh,
+                                          const string strTF,
+                                          const matrix r "Vector of threshold values",
+                                          scalar trim "Trimming percentage",
+                                          const matrix qq1,
+                                          int qn1,
+                                          int qn)
   /* Determine optimal threshold value. */
 
   if maxc(r) == 0
@@ -17,39 +17,42 @@ function matrix R_EST (const series endo,
       matrix rr = msortby(r, 1)
       qq = qqsel(qq1, vec(rr))
   endif
-  sse = THR_SSE(endo, exo, rexo, thresh, strTF, qq, rr)
+  sse = compute_sse_of_thresholds(endo, exo, rexo, thresh, strTF, qq, rr)
   rihat = iminc(sse)'
 
   return sse[rihat] | qq[rihat]
 end function
 
-function matrix THR_SSE (series endo,
-                        list exo,
-                        list rexo,
-                        series thresh,
-                        string strTF,
-                        matrix q,
-                        matrix r)
-    /* This function estimates FE models conditional on (eventually already)
-    estimated threshold(s) 'r' over all potential break points 'q', and
-    stores the $ess' in a vector. */
+
+function matrix compute_sse_of_thresholds (const series endo,
+                                          const list exo,
+                                          const list rexo,
+                                          const series thresh,
+                                          const string strTF,
+                                          const matrix q,
+                                          const matrix r)
+    /* Estimate FE-model conditional on (eventually already) estimated
+      threshold(s) 'r' over all potential break points 'q', and store
+      the $ess' in a vector. */
 
     matrix sse = zeros(rows(q), 1)
+
+  matrix mat_thresh = {thresh}
+  matrix mat_rexo = {rexo}
 
     loop qi=1..rows(q) -q
         if r == 0
             matrix rr = q[qi]
         else
-            matrix rr = r|q[qi]
+            matrix rr = r | q[qi]
         endif
         rr = msortby(rr, 1)
-        nr = rows(rr)
 
         list INT = null
-        matrix mINT = intvar(rr, {thresh}, {rexo})
+        matrix mINT = intvar(rr, mat_thresh, mat_rexo)
+
         loop i=1..cols(mINT) -q
-            series S$i = mINT[,i]
-            INT+=S$i
+            INT += genseries(sprintf("S%d", $i), mINT[,i])
         endloop
 
         panel endo const exo INT --fixed-effects @strTF --quiet
@@ -59,12 +62,13 @@ function matrix THR_SSE (series endo,
     return sse
 end function
 
-function matrix qqsel (matrix q "Col. vector",
-                      matrix r "Col. vector")
+
+function matrix qqsel (const matrix q "Col. vector",
+                       const matrix r "Col. vector")
     /* Throws away those values of q which are in r. The resulting vector
     q will be smaller if in q some values coincide with values in r. */
 
-    C = sumr((q.=r)) - 1
+    C = sumr((q .=r )) - 1
     return selifr(q, C)
 end function
 
@@ -129,7 +133,7 @@ function bundle MODEL (matrix r,
         qq = qqsel(qq1, vec(rr))
     endif
 
-    sse = THR_SSE(endo, exo, rexo, thresh, strTF, qq, rr)
+    sse = compute_sse_of_thresholds(endo, exo, rexo, thresh, strTF, qq, rr)
     rihat = iminc(sse)'
     matrix rhat = qq[rihat]	        # Estimated threshold value
     matrix sse1 = sse[rihat]		# SSE conditional on newly determined threshold
@@ -229,7 +233,7 @@ function bundle MODEL (matrix r,
             # Alternative model with a single threshold.
             # Threshold will be estimated
             matrix mnull = zeros(1, 1)
-            matrix mrestA = R_EST(yb, exo, rexo, thresh, strTF, mnull,\
+            matrix mrestA = compute_optimal_threshold(yb, exo, rexo, thresh, strTF, mnull,\
                                   trim, qq1, qn1, qn)
             matrix sse1 = mrestA[1]
             rhat_b = mrestA[2]
@@ -239,7 +243,7 @@ function bundle MODEL (matrix r,
             if abs(maxc(r)) > 0
                 loop jj=1..rows(r) -q
                     matrix sse0 = sse1
-                    matrix mrestB = R_EST(yb, exo, rexo, thresh, strTF,\
+                    matrix mrestB = compute_optimal_threshold(yb, exo, rexo, thresh, strTF,\
                                           rrr, trim, qq1, qn1, qn)
                     matrix sse1 = mrestB[1]
                     rhat_b = mrestB[2]
