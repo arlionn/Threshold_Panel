@@ -297,30 +297,30 @@ end function
 
 
 
-function void printout (const matrix beta_indep,
-                        const matrix sehet_indep,
-                        const matrix sehomo_indep,
-                        const matrix beta_dep,
-                        const matrix sehet_dep,
-                        const matrix sehomo_dep,
-                        const matrix rhats,
-                        const matrix sse,
-                        const matrix lrt,
-                        const matrix lrcrits,
-                        scalar lrprob,
-                        int nrep,
-                        const strings strEXO,
-                        const strings strREXO,
-                        int lreg,
-                        int iterat,
-                        scalar trim,
-                        scalar R2,
-                        scalar DW,
-                        const matrix hettest,
-                        const matrix csdeptest,
-                        const matrix sercorr,
-                        scalar TF,
-                        scalar conf_level)
+function void print_model_estimates (const matrix beta_indep,
+                                    const matrix sehet_indep,
+                                    const matrix sehomo_indep,
+                                    const matrix beta_dep,
+                                    const matrix sehet_dep,
+                                    const matrix sehomo_dep,
+                                    const matrix rhats,
+                                    const matrix sse,
+                                    const matrix lrt,
+                                    const matrix lrcrits,
+                                    scalar lrprob,
+                                    int nrep,
+                                    const strings strEXO,
+                                    const strings strREXO,
+                                    int lreg,
+                                    int iterat,
+                                    scalar trim,
+                                    scalar R2,
+                                    scalar DW,
+                                    const matrix hettest,
+                                    const matrix csdeptest,
+                                    const matrix sercorr,
+                                    scalar TF,
+                                    scalar conf_level)
     /* */
 
     set warnings off
@@ -454,7 +454,7 @@ function void printout (const matrix beta_indep,
 end function
 
 
-function void linprintout (const matrix beta_lin,
+function void print_linear_model_estimates (const matrix beta_lin,
                           const matrix sehet_lin,
                           const matrix sehomo_lin,
                           const matrix sse,
@@ -640,8 +640,10 @@ function bundle estimate_tpm (const series endo,
 
 
     # PRINTOUT LINEAR estimate_and_bootstrap RESULTS
-    linprintout(OUT.beta_lin, OUT.sehet_lin, OUT.sehomo_lin, SSE[1], strEXO,\
-      strREXO, TF, R2[1], DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
+    print_linear_model_estimates(OUT.beta_lin, OUT.sehet_lin,\
+                                 OUT.sehomo_lin, SSE[1], strEXO,\
+                                 strREXO, TF, R2[1], DW[1], hettest[1,],\
+                                 csdeptest[1,], sercorr[1,])
 
     # Start threshold procedure
     loop lreg=1..nthresh -q		# Loop over specified # of max. thresholds
@@ -693,7 +695,7 @@ function bundle estimate_tpm (const series endo,
         endif
 
         # Print Model
-        printout(beta_indep_T$lreg, sehet_indep_T$lreg,\
+        print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
                 sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg,\
                 sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg],\
                 lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, \
@@ -735,7 +737,7 @@ function bundle estimate_tpm (const series endo,
             SSE[1+lreg] = b.sse
             R2[1+lreg] = b.r2
 
-            printout(beta_indep_T$lreg, sehet_indep_T$lreg,\
+            print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
                     sehomo_indep_T$lreg, beta_dep_T$lreg,\
                     sehet_dep_T$lreg, sehomo_dep_T$lreg,\
                     rhats[1:lreg,], SSE[1+lreg], lrtest[lreg],\
