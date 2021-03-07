@@ -68,7 +68,7 @@ function matrix qqsel (const matrix q "Col. vector",
     /* Throws away those values of q which are in r. The resulting vector
     q will be smaller if in q some values coincide with values in r. */
 
-    C = sumr((q .=r )) - 1
+    C = sumr((q .= r )) - 1
     return selifr(q, C)
 end function
 
@@ -229,15 +229,17 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
         list xlist0 = exo rexo
 
         loop while j <= nrep -q
-            series yb = yp + resample(ehat) # Hansen's resample method
+            series yb = yp + resample(ehat)   # Hansen's resample method
+
             # Null model w.o. any threshold
             panel yb 0 xlist0 --fixed-effects @strTF --quiet
             matrix sse0 = $ess
+
             # Alternative model with a single threshold.
             # Threshold will be estimated
             matrix mnull = zeros(1, 1)
-            matrix mrestA = compute_optimal_threshold(yb, exo, rexo, thresh, strTF, mnull,\
-                                  trim, qq1, qn1, qn)
+            matrix mrestA = compute_optimal_threshold(yb, exo, rexo,\
+                            thresh, strTF, mnull, trim, qq1, qn1, qn)
             matrix sse1 = mrestA[1]
             rhat_b = mrestA[2]
             rrr = rhat_b      # estimated threshold based on bootstrap sample
@@ -246,8 +248,9 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
             if abs(maxc(threshold_values)) > 0
                 loop jj=1..rows(threshold_values) -q
                     matrix sse0 = sse1
-                    matrix mrestB = compute_optimal_threshold(yb, exo, rexo, thresh, strTF,\
-                                          rrr, trim, qq1, qn1, qn)
+                    matrix mrestB = compute_optimal_threshold(yb, exo,\
+                                    rexo, thresh, strTF, rrr, trim, qq1,\
+                                    qn1, qn)
                     matrix sse1 = mrestB[1]
                     rhat_b = mrestB[2]
                     rrr = rrr|rhat_b
@@ -270,9 +273,11 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
                 flush
                 counter = 0
             endif
+
             if j == nrep
                 printf "\n\n"
             endif
+
             counter++
             j++
         endloop
@@ -292,28 +297,28 @@ end function
 
 
 
-function void printout (matrix beta_indep,
-                        matrix sehet_indep,
-                        matrix sehomo_indep,
-                        matrix beta_dep,
-                        matrix sehet_dep,
-                        matrix sehomo_dep,
-                        matrix rhats,
-                        matrix sse,
-                        matrix lrt,
-                        matrix lrcrits,
+function void printout (const matrix beta_indep,
+                        const matrix sehet_indep,
+                        const matrix sehomo_indep,
+                        const matrix beta_dep,
+                        const matrix sehet_dep,
+                        const matrix sehomo_dep,
+                        const matrix rhats,
+                        const matrix sse,
+                        const matrix lrt,
+                        const matrix lrcrits,
                         scalar lrprob,
                         int nrep,
-                        strings strEXO,
-                        strings strREXO,
+                        const strings strEXO,
+                        const strings strREXO,
                         int lreg,
                         int iterat,
                         scalar trim,
                         scalar R2,
                         scalar DW,
-                        matrix hettest,
-                        matrix csdeptest,
-                        matrix sercorr,
+                        const matrix hettest,
+                        const matrix csdeptest,
+                        const matrix sercorr,
                         scalar TF,
                         scalar conf_level)
     /* */
@@ -357,7 +362,7 @@ function void printout (matrix beta_indep,
                   (conf_level * 100), minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
         endif
 
-    elif lreg==3
+    elif lreg == 3
         printf "*******************************************************************************\n"
         printf "*************************\n"
         printf "Triple Threshold Model  *\n"
@@ -365,7 +370,7 @@ function void printout (matrix beta_indep,
         printf "%s\n", strTF
         printf "Trimming Percentage \t %.3f", trim
         printf "\n"
-        if iterat==1
+        if iterat == 1
             printf "*** First Iteration ***\n"
             printf "\nFixed Threshold(s) = %12.5f\n", rhats[1:lreg-1,2]'
             printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
@@ -409,20 +414,16 @@ function void printout (matrix beta_indep,
     strings rname = null
     if lreg == 1			# single threshold
         loop i=1..nelem(strREXO) -q
-            sprintf S "%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted
-            rname += S
-            sprintf S "%s*I*(Thresh>%.3f) ", strREXO[i], rsorted
-            rname += S
+            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted)
+            rname += sprintf("%s*I*(Thresh>%.3f) ", strREXO[i], rsorted)
         endloop
 
     elif lreg == 2 			# double threshold
         loop i=1..nelem(strREXO) -q
-            sprintf S "%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted[1]
-            rname += S
-            sprintf S "%s*I*(%.3f<Thresh<=%.3f) ", strREXO[i], rsorted[1], rsorted[2]
-            rname += S
-            sprintf S "%s*I*(%.3f<Thresh) ", strREXO[i], rsorted[2]
-            rname += S
+            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted[1])
+            rname += sprintf("%s*I*(%.3f<Thresh<=%.3f) ", strREXO[i],\
+                            rsorted[1], rsorted[2])
+            rname += sprintf("%s*I*(%.3f<Thresh) ", strREXO[i], rsorted[2])
         endloop
 
     elif lreg == 3			# triple threshold -- not yet implemented!
@@ -453,18 +454,18 @@ function void printout (matrix beta_indep,
 end function
 
 
-function void linprintout (matrix beta_lin,
-                          matrix sehet_lin,
-                          matrix sehomo_lin,
-                          matrix sse,
-                          strings strEXO,
-                          strings strREXO,
+function void linprintout (const matrix beta_lin,
+                          const matrix sehet_lin,
+                          const matrix sehomo_lin,
+                          const matrix sse,
+                          const strings strEXO,
+                          const strings strREXO,
                           int TF,
                           scalar R2,
                           scalar DW,
-                          matrix hettest,
-                          matrix csdeptest,
-                          matrix sercorr)
+                          const matrix hettest,
+                          const matrix csdeptest,
+                          const matrix sercorr)
   /* */
 
     printf "\n***********************************\n"
@@ -656,14 +657,15 @@ function bundle estimate_tpm (const series endo,
             # Store likelihood ratio over potential thresholds for each model
             matrix lrstats = zeros(rows(qq1), nthresh)
         else
-            sprintf stmp "%d", ($lreg-1)
+            #string stmp = sprintf("%d", ($lreg-1)) # NOT USED
         endif
         printf "\n*************************************\n"
         printf "\nThreshold Model with %d Threshold(s)\n", $lreg
         flush
 
-        bundle b = estimate_and_bootstrap(rhats[lreg,2], trim[lreg], nrep, qn, qq1, cc,\
-                        endo, exo, rexo, thresh, strTF)
+        bundle b = estimate_and_bootstrap(rhats[lreg,2], trim[lreg],\
+                                          nrep, qn, qq1, cc,\
+                                          endo, exo, rexo, thresh, strTF)
 
         # Store information from b
         rhats[lreg,] = b.rhatCI
@@ -798,7 +800,7 @@ end function
 
 
 function void lrplot (matrix lrstats "LR test stats. for threshold.",
-                      matrix qq "Threshold values evaluated",
+                      const matrix qq "Threshold values evaluated",
                       string fname "Path + file name for storing graphs")
     /* */
 
@@ -808,18 +810,18 @@ function void lrplot (matrix lrstats "LR test stats. for threshold.",
     # 10%, 5 and 1% critical value for H0: gamma=gamma_0
     matrix cc = {6.53, 7.35, 10.59}
     lrstats = (lrstats .< 1000) .* lrstats
+    rows_qq = rows(qq)
 
     loop nplot=1..cols(lrstats) -q
 
-        matrix mtmp = ones(rows(qq), cols(cc)) .* cc
+        matrix mtmp = ones(rows_qq, cols(cc)) .* cc
         matrix mplot = lrstats[,nplot] ~ mtmp ~ qq
         colnames(mplot, "LR-Ratio 90pct. 95pct. 99pct. qq")
 
         if fname == "display"
             string fout = fname
         else
-            sprintf S2 "@fname/ThresholdPanel_CI_No=%d.png", $nplot
-            fout = S2
+            fout = sprintf("@fname/ThresholdPanel_CI_No=%d.png", $nplot)
         endif
 
         plot mplot
