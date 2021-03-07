@@ -1,65 +1,35 @@
-#***************************************************************************
-# EXAMPLE: Replication of Hansen's results in Journal of Econometrics (1999)
-#***************************************************************************
-# NOTE: For some reasons Hansen doesn't exploit the whole dataset comprising
-# 14 time observations (one lost due to lags) but actually only 13 if one
-# looks at his code. Hence, our results based on the full unrestricted
-# dataset do not fully coincide!
 set verbose off
 clear
 
+/* Replication of Hansen's results in Journal of Econometrics (1999)
+
+ NOTE: For some reasons Hansen doesn't exploit the whole dataset comprising
+ 14 time observations (one lost due to lags) but actually only 13 if one
+ looks at his code. Hence, our results based on the full unrestricted
+ dataset do not fully coincide!
+*/
+
 set workdir "/home/at/git/Threshold_Panel"
 include "./src/Threshold_Panel.inp" --force
+
+include wooldridge_test_serial.gfn
 
 # include Threshold_Panel.gfn
 #open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 open "./src/ThresholdPanel_data_joe99.gdt" --quiet
 
-# *** Gretl versions starting with 2016d should handle this
-# *** automatically, but in case of problems please install
-# *** the 'wooldridge_test_serial' package by hand.
-if $version >= 20164
-    catch include wooldridge_test_serial.gfn
-    if $error
-        install wooldridge_test_serial
-        include wooldridge_test_serial.gfn
-    endif
-else
-  # install wooldridge_test_serial
-  include wooldridge_test_serial.gfn
-endif
-
-#-----------------
-# Dataset settings
-#-----------------
+# Define a panel data set + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
 rename v1 inva
 rename v2 vala
 rename v3 cfa
 rename v4 debta
 
-#------------------------
-# SET UP MODEL PARAMETERS
-#------------------------
-/*
-scalar nthresh = 2                      # Max. # of thresholds to test, Hansen (1999) ntresh=3
-scalar qn = 100                         # Hansen (1999) qn=400
-scalar nrep = 100                       # Hansen (1999) nrep=300
-matrix trim = {0.01, 0.01}              # Hansen (1999) trim_1=0.01, trim_2=0.01, trim_3=0.05
-scalar alpha = 0.5                      # 0<alpha<1: Choose a rather high value if you want to estimate the refinement coefficient values
-scalar conf_lev = 0.95                  # Hansen (1999) conf_lev=0.95
-scalar TF = 0                           # Time-effects: 0=NO (Hansen, 1999), 1=YES
-*/
-#--------------------------------
-# Shrink dataset for illustration
-# Note: Using the complete sample
-# takes a very long time
-#--------------------------------
-smpl 1:01 15:15
+# Shrink dataset for illustration purpose only
+# Note: Using the complete sample takes a very long time
+smpl 1:01 25:15
 
-#------------------------------
 # Set up the series of interest
-#------------------------------
 series vala2 = vala^2
 series vala3 = vala^3
 series debtval = debta*vala
@@ -72,22 +42,25 @@ list Lall = inva exo1 rexo1 thresh
 # Make sure you have a balanced dataset
 smpl Lall --balanced --no-missing
 
-#-------------------
-# Run the procedure
-#-------------------
-bundle opts = _(nthresholds = 2, nboot=100, nquantiles = 100)
+
+# Run the procedure with default values
 set stopwatch
-bundle B = estimate_tpm(inva, exo1, rexo1, thresh, opts)
+bundle Model = estimate_tpm(inva, exo1, rexo1, thresh)
 printf "\n This took %.2f seconds\n", $stopwatch
 
-#---------------
-# Bundle output
-#---------------
-print B
+print Model         # print bundle output
 
-#---------------------------------------------------
-# Plot the Likelihood Ratio test confidence interval
-# jointly with the 'no-rejection region' using the
-# likelihood ratio statistic for tests on gamma.
-#---------------------------------------------------
-plot_thresholds(B)
+/* Plot the Likelihood Ratio test confidence interval jointly with the
+'no-rejection region' using the LR-statistic for tests on gamma. */
+plot_tpm(Model)
+
+stop
+
+# Optionally: Run the procedure with you own values
+bundle opts = _(nthresholds = 2,\
+                nboot = 199,\
+                confidence_level = 0.8)
+bundle Model2 = estimate_tpm(inva, exo1, rexo1, thresh, opts)
+
+plot_tpm(Model2)
+

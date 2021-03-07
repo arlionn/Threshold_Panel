@@ -3,17 +3,17 @@ function matrix compute_optimal_threshold (const series endo,
                                           const list rexo,
                                           const series thresh,
                                           const string strTF,
-                                          const matrix r "Vector of threshold values",
+                                          const matrix threshold "Threshold values",
                                           const matrix qq1,
                                           int qn1,
                                           int nquantiles)
   /* Determine optimal threshold value. */
 
-  if maxc(r) == 0
+  if maxc(threshold) == 0
       qq = qq1
       matrix rr = 0
   else
-      matrix rr = msortby(r, 1)
+      matrix rr = msortby(threshold, 1)
       qq = qqsel(qq1, vec(rr))
   endif
   sse = compute_sse_of_thresholds(endo, exo, rexo, thresh, strTF, qq, rr)
@@ -295,8 +295,6 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
 end function
 
 
-
-
 function void print_linear_model_estimates (const matrix beta_lin,
                           const matrix sehet_lin,
                           const matrix sehomo_lin,
@@ -513,7 +511,6 @@ function void print_model_estimates (const matrix beta_indep,
 end function
 
 
-
 function bundle estimate_tpm (const series endo,
                               const list exo,
                               const list rexo,
@@ -528,7 +525,8 @@ function bundle estimate_tpm (const series endo,
       self = Options + self
     endif
 
-    bundle OUT
+    # Checks
+    errorif(self.alpha < 0 || self.alpha > 1, "Ensure 0 < 'alpha' < 1.")
 
     if nelem(rexo) > 1
       printf "\nWarning: Currently only a single regime-dependent variable \n\
@@ -536,13 +534,14 @@ function bundle estimate_tpm (const series endo,
                 your model.\n"
       flush
     endif
-    errorif(self.nthresholds > 2, "Currently only a double threshold model is at maximum supported.")
 
+    errorif(self.nthresholds > 2, "Currently only a double threshold model is at maximum supported.")
 
     self.trimming_values = vec(self.trimming_values)
     errorif(rows(self.trimming_values) < self.nthresholds,\
           sprintf("The no. of threshold tests does not equal the no. of \n\
                    entries in matrix 'self.trimming_values'. Please correct this."))
+
 
     NT = $nobs
     list Lall = endo exo rexo thresh
@@ -769,35 +768,35 @@ function bundle estimate_tpm (const series endo,
 
     # BUNDLE elements for output
     if self.nthresholds == 1
-        strings Srnam = defarray("Linear Model", "Single Threshold")
-        strings Srnam2 = defarray("Single Threshold")
+        strings row_labels = defarray("Linear Model", "Single Threshold")
+        strings row_labels_2 = defarray("Single Threshold")
     elif self.nthresholds == 2
-        strings Srnam = defarray("Linear Model", "Single Threshold", "Dual Threshold")
-        strings Srnam2 = defarray("Single Threshold", "Dual Threshold")
+        strings row_labels = defarray("Linear Model", "Single Threshold", "Dual Threshold")
+        strings row_labels_2 = defarray("Single Threshold", "Dual Threshold")
     elif self.nthresholds == 3
-        strings Srnam = defarray("Linear Model", "Single Threshold", "Dual Threshold", "Quad. Threshold")
-        strings Srnam2 = defarray("Single Threshold", "Dual Threshold", "Quad. Threshold")
+        strings row_labels = defarray("Linear Model", "Single Threshold", "Dual Threshold", "Quad. Threshold")
+        strings row_labels_2 = defarray("Single Threshold", "Dual Threshold", "Quad. Threshold")
     endif
 
-    strings Scnam2 = defarray("Test stat.", "Prob.")
-    rownames(DW, Srnam)
+    strings column_labels = defarray("Test stat.", "Prob.")
+    rownames(DW, row_labels)
     colnames(DW, "DW")
     self.DW = DW
-    rownames(hettest, Srnam)
-    colnames(hettest, Scnam2)
+    rownames(hettest, row_labels)
+    colnames(hettest, column_labels)
     self.hettest = hettest
-    rownames(csdeptest, Srnam)
-    colnames(csdeptest, Scnam2)
+    rownames(csdeptest, row_labels)
+    colnames(csdeptest, column_labels)
     self.csdeptest = csdeptest
-    rownames(sercorr, Srnam)
-    colnames(sercorr, Scnam2)
+    rownames(sercorr, row_labels)
+    colnames(sercorr, column_labels)
     self.sercorr = sercorr
-    rownames(lrtest, Srnam2)
-    rownames(lrprob, Srnam2)
-    rownames(lrcrit, Srnam2)
+    rownames(lrtest, row_labels_2)
+    rownames(lrprob, row_labels_2)
+    rownames(lrcrit, row_labels_2)
     colnames(lrcrit, "90pct. 95pct. 99pct.")
-    rownames(SSE, Srnam)
-    rownames(SSE, Srnam)
+    rownames(SSE, row_labels)
+    rownames(SSE, row_labels)
     self.lrstats = lrstats
     self.lrtest = lrtest
     self.lrprob = lrprob
@@ -810,8 +809,8 @@ function bundle estimate_tpm (const series endo,
 end function
 
 
-function void plot_thresholds (const bundle self "Return by estimate_tpm()",
-                               const string path[null] "Directory for storing plots")
+function void plot_tpm (const bundle self "Return by estimate_tpm()",
+                       const string path[null] "Directory for storing plots")
     /* Plot thresholds estimation results plus confidence intervals.
       Asymptotic distribution of threshold estimate. */
 
@@ -838,8 +837,8 @@ function void plot_thresholds (const bundle self "Return by estimate_tpm()",
             options with-lines fit=none single-yaxis
             #literal set term png font 'Helvetica,13'
             printf "set title 'Confidence Interval Construction: %d Threshold Model' font 'serif,13'", cols(lrstats)
-            printf "set xlabel 'Threshold Parameter no. %d' font 'Helvetica,13'",\
-                  $nplot
+            printf "set xlabel 'Threshold Parameter no. %d' font \
+                  'Helvetica,13'", $nplot
 
             literal set key outside below font 'Helvetica,13' #top right
             literal set y2tics

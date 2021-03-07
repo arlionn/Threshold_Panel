@@ -1,99 +1,113 @@
- This package is an implementation of Bruce E. Hansen's panel-threshold model.
+This package is an implementation of Bruce E. Hansen's panel-threshold model.
 
 Reference:
 "Threshold effects in non-dynamic panels: Estimation, testing, and inference", published in Journal of Econometrics 93 (1999) 345-368.
 URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 
 
-*** NOTE 1: Be aware that the use of version 1.0 in comparison to
-vers. 0.921 has fundamentally changed.
 
-*** NOTE 2: This package requires the user-written external
-package "wooldridge_test_serial.gfn" which has to be called
-by the user
-<hansl>
-	install wooldridge_test_serial only the 1st time!
-include wooldridge_test_serial.gfn
-</hansl>
+Public functions
+=================
 
+estimate_tpm(endo, exo, rexo, thresh, opts[null])
+-------------------------------------------------
+Parameters:
+endo         - series, endogenous series
+exo          - list, regime-independend regressors
+rexo         - list, regime-dependend exogenous (currently only single
+               entry supported)
+thresh       - series, threshold variable
+opts         - bundle, Configure estimation parameters (optional)
 
-MAIN FUNCTION:
-	Format: {BUNDLE} = THRESH_SETUP(ENDO, EXO, REXO, THRESH,\
-		nthresh, TF, qn, nrep, trim, alpha, conf_lev)
-
-Input:
-endo 		- series, endogenous
-exo		- list, regime-independend regressors
-rexo		- list, regime-dependend exogenous (currently only 1 entry supported!)
-thresh		- series, threshold variable
-nthresh		- int, number of thresholds to test (1 or 2)
-TF		- int, add time effects: 0=NO, 1=YES
-qn		- int, number of quintiles of thresh to examine
-nrep		- int, number of bootstrap replications
-trim		- matrix, "1 by nthresh" vector of percentages to
-		trim before running each each model, e.g. {0.01, 0.01, 0.05}
-alpha		- scalar, compute the refinement estimates only if the
-		p-value of the double threshold test is smaller than "alpha"
-conf_level	- scalar, width of the confidence interval for the test
-		on threshold equality
-
-Output: {BUNDLE}
-beta_lin	- matrix, (1+k) by 1 vector of estim. coefficients
-		of linear benchmark model with intercept + k regressors
-sehomo_lin	- matrix of OLS S.E. of estimated linear benachmark model
-sehet_lin	- matrix of HAC-robust S.E. of estimated linear
-		benachmark model
-beta_indep_Tx	- matrix, k by 1 of regime-independent coeff. for model with
-		x regimes
-sehet_indep_Tx	- matrix of HAC-robust S.E. of reg.-indep. coeff. for model
-		with x regimes
-sehomo_indep_Tx	- matrix of OLS S.E. of reg.-indep. coeff. for model with
-		x regimes
-beta_dep_Tx	- matrix, n by 1 of regime-dependent coeff. for model with
-		x regimes
-sehet_dep_Tx	- matrix of HAC-robust S.E. of reg.-dep. coeff. for model
-		with x regimes
-sehomo_dep_Tx	- matrix of OLS S.E. of reg.-dep. coeff. for model with
-		x regimes
-qq		- matrix, vector of potential threshold values
-rhats		- matrix of estimated thresholds for all threshold
-		models (see row names for more details)
-lrstats		- matrix, qn by nthresh storing likelihood ratio statistics
-		for all threshold values for each model
-		(refinement value if ran)
-lrtest		- matrix, nr by 1 holding the LR-test statistics for nr
-		threshold models
-lrprob		- matrix, nr by 1 holding the bootstrap pvalues of the
-		LR-test for nr threshold models
-lrcrit		- matrix, nr by 3 holding the bootstrap criticial values:
-		(10pct~5pct~1pct) for nr threshold models
-SSE		- matrix of SSEs of linear benchmark|single|double
-		threshold models
-n		- scalar, no. of cross-section units
-tt		- scalar, no. of valid (actually used) observations
-nt		- scalar, n*tt
-R2		- matrix, within R^2 of linear|single|double threshold
-		models (see row names)
-DW		- matrix, Durbin-Watson test statistics of
-		linear|single|double threshold models (see rown names)
-csdeptes	- matrix, test results on no cross-sectional dependence
-		(test~pvalue) for linear|single|double threshold models
-sercorr		- matrix, test results on serial corr. (order 1)
-		(test~pvalue) for linear|single|double threshold models
-hettest		- matrix, test results of no heteroskedasticity (test~pvalue) for
-		linear|single|double threshold models
+Returns: Bundle comprising various information.
 
 
-FUNCTION PLOTTING LR STATISTICS VS. THRESHOLD PARAMETERS
-Format: lrplot(lrstats, qq, fname)
+plot_tpm(model, path[null])
+---------------------------
+Parameters:
+model        - bundle, returned bundlde from estimate_tpm() function
+path         - string, Diretory where to store plots (optional). If not
+               specified, plots appear immediately on screen. If specified,
+               the figure(s) will be named "ThresholdPanel_CI_No=X.png"
+               where X refers to the number of thresholds.
 
-Input:
-lrstats		- matrix, rows(qq) by nthresh holding the LR test stats
-		for threshold (cols) over all threshold values (rows)
-qq		- matrix, col.vector holding the evaluated threshold parameters
-fname		- string, Path (e.g. "/home/$USER/gretl") where to store
-		the figures	(will be named ThresholdPanel_CI_No=X.png"
-		where X is the no. of threshold); or use the "display" option
+Returns: Nothing
+
+
+Default model and estimation values
+===================================
+The following default parameters are set:
+
+- <nthresholds = 1>: Number of thresholds, default: 1
+- <with_timeeffects = TRUE>: Estimate model tith time-effects, default: TRUE
+- <scalar nquantiles = 200>: Number of quantiles to analys, default: 200
+- <scalar nboot = 299>: Number of boostrap replications, default: 299
+   # Hansen (1999) trim_1=0.01, trim_2=0.01, trim_3=0.05
+- <matrix trimming_values = vec({0.01, 0.01, 0.05})>: Percentages to trim
+   the sample start and end for each of max. three thresholds.
+- <scalar alpha = 0.5>: Choose a rather high value if you want to estimate
+   the refinement coefficient values.
+- <scalar confidence_level = 0.95>: Level of confidence for threshold
+   estimates
+
+The "opts" parameter bundle
+============================
+The user can pass various parameters to estimate_tmp() to over-write the default values listed above.
+To do so, you simple pass a bundle where the key must match the name of
+the parameter you want to replace by a specific value. See the sample script
+for an illustration.
+
+
+Items of the bundle returned after estimation by estimate_tpm()
+===============================================================
+Apart from all parameters set (See section entitled "Default model and estimation values"), many further information are returned:
+
+N                - Number of cross-section units
+T                - Number of  of valid (actually used) observations
+NT               - N * T
+
+beta_lin         - matrix, (1+k) by 1 vector of estim. coefficients of
+                   linear benchmark model with intercept + k regressors
+sehomo_lin       - matrix of OLS S.E. of estimated linear benachmark model
+sehet_lin        - matrix of HAC-robust S.E. of estimated linear
+                   benachmark model
+beta_indep_Tx    - matrix, k by 1 of regime-independent coeff. for model
+                   with x regimes
+sehet_indep_Tx   - matrix of HAC-robust S.E. of reg.-indep. coeff. for
+                   model with x regimes
+sehomo_indep_Tx  - matrix of OLS S.E. of reg.-indep. coeff. for model
+                   with x regimes
+beta_dep_Tx	     - matrix, n by 1 of regime-dependent coeff. for model
+                   with x regimes
+sehet_dep_Tx     - matrix of HAC-robust S.E. of reg.-dep. coeff. for
+                   model with x regimes
+sehomo_dep_Tx    - matrix of OLS S.E. of reg.-dep. coeff. for model with
+                   x regimes
+qq               - matrix, vector of potential threshold values
+rhats            - matrix of estimated thresholds for all threshold
+                   models (see row names for more details)
+lrstats          - matrix, qn by nthresh storing likelihood ratio
+                   statistics all threshold values for each model
+                   (refinement value if computed)
+lrtest           - nr by 1 matrix holding the LR-test statistics for nr
+                   threshold models
+lrprob           - matrix, nr by 1 holding the bootstrap pvalues of the
+                   LR-test for nr threshold models
+lrcrit           - matrix, nr by 3 holding the bootstrap criticial values:
+                   (10pct ~ 5pct ~ 1pct) for nr threshold models
+SSE              - matrix of SSEs of linear benchmark|single|double
+                   threshold models
+R2               - matrix, within R^2 of linear|single|double threshold
+                   models (see row names)
+DW               - matrix, Durbin-Watson test statistics of
+                   linear|single|double threshold models (see rown names)
+csdeptes         - matrix, test results on no cross-sectional dependence
+                   (test ~ pvalue) for linear|single|double threshold models
+sercorr          - matrix, test results on serial corr. (order 1)
+                   (test ~ pvalue) for linear|single|double threshold models
+hettest          - matrix, test results of no heteroskedasticity
+                   (test~pvalue) for linear|single|double threshold models
+
 
 
 CHANGELOG:
@@ -101,7 +115,7 @@ CHANGELOG:
 
 2.0 (March 2021)
 - Changed API: Replace function SETUP_THRESH() to estimate_tpm().
-- Changed API: Replace function lrplot() by plot_thresholds().
+- Changed API: Replace function lrplot() by plot_tmp().
 - Replace "stop" by errorif() function.
 - Internal refactoring and reformating (about 5% gain of speed).
 
