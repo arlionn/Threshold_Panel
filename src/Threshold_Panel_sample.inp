@@ -9,14 +9,9 @@ clear
  dataset do not fully coincide!
 */
 
-set workdir "/home/at/git/Threshold_Panel"
-include "./src/Threshold_Panel.inp" --force
+include Threshold_Panel.gfn
+open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 
-include wooldridge_test_serial.gfn
-
-# include Threshold_Panel.gfn
-#open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
-open "./src/ThresholdPanel_data_joe99.gdt" --quiet
 
 # Define a panel data set + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
@@ -54,13 +49,13 @@ print Model         # print bundle output
 'no-rejection region' using the LR-statistic for tests on gamma. */
 plot_tpm(Model)
 
-stop
 
-# Optionally: Run the procedure with you own values
+/* Activate optionally
+# Run the procedure with you own values
 bundle opts = _(nthresholds = 2,\
                 nboot = 199,\
                 confidence_level = 0.8)
 bundle Model2 = estimate_tpm(inva, exo1, rexo1, thresh, opts)
 
 plot_tpm(Model2)
-
+*/

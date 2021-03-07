@@ -118,6 +118,7 @@ CHANGELOG:
 - Changed API: Replace function lrplot() by plot_tmp().
 - Replace "stop" by errorif() function.
 - Internal refactoring and reformating (about 5% gain of speed).
+- Update help file.
 
 1.1 (June 2018)
 - Drop "lrcrit" input for lrplot() -- USER must correct their code!
