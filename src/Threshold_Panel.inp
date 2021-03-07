@@ -1,23 +1,23 @@
-function matrix R_EST (series endo,
-                      list exo,
-                      list rexo,
-                      series thresh,
-                      string strTF,
-                      matrix r "Vector of threshold values",
+function matrix R_EST (const series endo,
+                      const list exo,
+                      const list rexo,
+                      const series thresh,
+                      const string strTF,
+                      const matrix r "Vector of threshold values",
                       scalar trim "Trimming percentage",
-                      matrix qq1,
+                      const matrix qq1,
                       int qn1,
                       int qn)
-  /* */
+  /* Determine optimal threshold value. */
 
   if maxc(r) == 0
       qq = qq1
       matrix rr = 0
   else
-      matrix rr = msortby(r,1)
-      qq = qqsel(qq1,vec(rr))
+      matrix rr = msortby(r, 1)
+      qq = qqsel(qq1, vec(rr))
   endif
-  sse = THR_SSE(endo,exo,rexo,thresh,strTF,qq,rr)
+  sse = THR_SSE(endo, exo, rexo, thresh, strTF, qq, rr)
   rihat = iminc(sse)'
 
   return sse[rihat] | qq[rihat]
