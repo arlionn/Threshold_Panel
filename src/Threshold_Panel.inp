@@ -4,10 +4,9 @@ function matrix compute_optimal_threshold (const series endo,
                                           const series thresh,
                                           const string strTF,
                                           const matrix r "Vector of threshold values",
-                                          scalar trim "Trimming percentage",
                                           const matrix qq1,
                                           int qn1,
-                                          int qn)
+                                          int nquantiles)
   /* Determine optimal threshold value. */
 
   if maxc(r) == 0
@@ -106,9 +105,9 @@ end function
 
 
 function bundle estimate_and_bootstrap (const matrix threshold_values,
-                                      scalar trim,
-                                      int nrep,
-                                      scalar qn,
+                                      scalar trimming_values,
+                                      int nboot,
+                                      scalar nquantiles,
                                       const matrix qq1,
                                       scalar cc,
                                       const series endo,
@@ -201,7 +200,7 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
 
     # BOOTSTRAP LR Test for threshold effect #
     # H0: b1=b2
-    if nrep > 0
+    if nboot > 0
         /* Construct the interaction terms but only using information on
         previously estimated thresholds rr. */
 
@@ -225,10 +224,10 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
         lrt = (sse0/sse1 - 1) * nt
         scalar j = 1
         counter = 1
-        matrix stats = zeros(nrep, 1)
+        matrix stats = zeros(nboot, 1)
         list xlist0 = exo rexo
 
-        loop while j <= nrep -q
+        loop while j <= nboot -q
             series yb = yp + resample(ehat)   # Hansen's resample method
 
             # Null model w.o. any threshold
@@ -239,7 +238,7 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
             # Threshold will be estimated
             matrix mnull = zeros(1, 1)
             matrix mrestA = compute_optimal_threshold(yb, exo, rexo,\
-                            thresh, strTF, mnull, trim, qq1, qn1, qn)
+                            thresh, strTF, mnull, qq1, qn1, nquantiles)
             matrix sse1 = mrestA[1]
             rhat_b = mrestA[2]
             rrr = rhat_b      # estimated threshold based on bootstrap sample
@@ -249,8 +248,8 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
                 loop jj=1..rows(threshold_values) -q
                     matrix sse0 = sse1
                     matrix mrestB = compute_optimal_threshold(yb, exo,\
-                                    rexo, thresh, strTF, rrr, trim, qq1,\
-                                    qn1, qn)
+                                    rexo, thresh, strTF, rrr, self.trimming_values, qq1,\
+                                    qn1, nquantiles)
                     matrix sse1 = mrestB[1]
                     rhat_b = mrestB[2]
                     rrr = rrr|rhat_b
@@ -259,7 +258,7 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
 
             stats[j] = (sse0/sse1 - 1) * nt   # test stat. for H0: b1=b2
             if j == 1
-                printf "\nBootstrap iterations of %d: \n",  nrep
+                printf "\nBootstrap iterations of %d: \n",  nboot
                 flush
             endif
 
@@ -274,7 +273,7 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
                 counter = 0
             endif
 
-            if j == nrep
+            if j == nboot
                 printf "\n\n"
             endif
 
@@ -284,7 +283,7 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
 
         crits = quantile(stats, 0.9) ~ quantile(stats, 0.95) ~ \
                 quantile(stats, 0.99)
-        scalar pv = sum(stats .> lrt) / nrep
+        scalar pv = sum(stats .> lrt) / nboot
         mout.lrtest = lrt
         mout.lrcrit = crits
         mout.lrprob = pv
@@ -297,162 +296,6 @@ end function
 
 
 
-function void print_model_estimates (const matrix beta_indep,
-                                    const matrix sehet_indep,
-                                    const matrix sehomo_indep,
-                                    const matrix beta_dep,
-                                    const matrix sehet_dep,
-                                    const matrix sehomo_dep,
-                                    const matrix rhats,
-                                    const matrix sse,
-                                    const matrix lrt,
-                                    const matrix lrcrits,
-                                    scalar lrprob,
-                                    int nrep,
-                                    const strings strEXO,
-                                    const strings strREXO,
-                                    int lreg,
-                                    int iterat,
-                                    scalar trim,
-                                    scalar R2,
-                                    scalar DW,
-                                    const matrix hettest,
-                                    const matrix csdeptest,
-                                    const matrix sercorr,
-                                    scalar TF,
-                                    scalar conf_level)
-    /* */
-
-    set warnings off
-
-    printf "\n"
-    if TF == 1
-        string strTF = "With Time Effects"
-    else
-        string strTF = ""
-    endif
-
-    if lreg == 1
-        printf "*******************************************************************************\n"
-        printf "*************************\n"
-        printf "Single Threshold Model  *\n"
-        printf "*************************\n"
-        printf "%s\n", strTF
-        printf "Threshold Estimate = %12.5f\n", rhats[lreg, 2]
-        printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
-              (conf_level * 100), minr(rhats[lreg,]), maxr(rhats[lreg,])
-
-    elif lreg == 2
-        printf "*******************************************************************************\n"
-        printf "*************************\n"
-        printf "Double Threshold Model *\n"
-        printf "*************************\n"
-        printf "%s\n", strTF
-        if iterat == 1
-            printf "*** First Iteration ***\n"
-            printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg-1,2]
-            printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
-            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
-                  (conf_level * 100), minr(rhats[lreg,]), maxr(rhats[lreg,])
-        else
-            printf "*** Second Iteration ***\n"
-            printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg,2]
-            printf "Threshold Estimate = %12.5f\n", rhats[lreg-1,2]
-            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
-                  (conf_level * 100), minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
-        endif
-
-    elif lreg == 3
-        printf "*******************************************************************************\n"
-        printf "*************************\n"
-        printf "Triple Threshold Model  *\n"
-        printf "*************************\n"
-        printf "%s\n", strTF
-        printf "Trimming Percentage \t %.3f", trim
-        printf "\n"
-        if iterat == 1
-            printf "*** First Iteration ***\n"
-            printf "\nFixed Threshold(s) = %12.5f\n", rhats[1:lreg-1,2]'
-            printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
-            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
-                  (conf_level * 100), minr(rhats[lreg,]), maxr(rhats[lreg,])
-        else
-            printf "*** Second Iteration ***\n"
-        endif
-    endif
-
-    printf "Sum of Squared Errors: %12.5f\n", sse
-    printf "Trimming Percentage = %12.3f\n", trim
-
-    if iterat == 1
-        printf "LR-test statistics = %12.3f\n", lrt
-        printf "Number of bootstrap replications = %d\n", nrep
-        printf "Bootstrap p-value: \t %.3f\n", lrprob
-        rownames(lrcrits, "10pct 5pct 1pct")
-        printf "Critical Values: \t 10pct.=%4.3f\t5pct.=%4.3f\t1pct.=%4.3f\n",\
-                lrcrits[1], lrcrits[2], lrcrits[3]
-        printf "*******************************************************************************\n"
-    endif
-
-    printf "Regime-dependent variable(s): "
-    loop i=1..nelem(strREXO) -q
-        printf "%s ", strREXO[i]
-    endloop
-
-    printf "\n\nRegime-independent Coefficients\n"
-    matrix mtmp = beta_indep ~ (beta_indep./sehet_indep) ~ \
-                  sehomo_indep ~ sehet_indep
-
-    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
-    strings rname = defarray("Const")
-    rname += strEXO
-    rownames(mtmp, rname)
-    printf "%12.4f\n", mtmp
-    matrix rsorted = sort(rhats[,2])
-
-    printf "Regime-dependent Coefficients\n"
-    strings rname = null
-    if lreg == 1			# single threshold
-        loop i=1..nelem(strREXO) -q
-            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted)
-            rname += sprintf("%s*I*(Thresh>%.3f) ", strREXO[i], rsorted)
-        endloop
-
-    elif lreg == 2 			# double threshold
-        loop i=1..nelem(strREXO) -q
-            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted[1])
-            rname += sprintf("%s*I*(%.3f<Thresh<=%.3f) ", strREXO[i],\
-                            rsorted[1], rsorted[2])
-            rname += sprintf("%s*I*(%.3f<Thresh) ", strREXO[i], rsorted[2])
-        endloop
-
-    elif lreg == 3			# triple threshold -- not yet implemented!
-      funcerr "Triple threshold model is not supported. Abort."
-    endif
-
-    matrix mtmp = beta_dep ~ (beta_dep./sehet_dep) ~ sehomo_dep ~ sehet_dep
-    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
-    rownames(mtmp,rname)
-    printf "%12.4f\n", mtmp
-
-    if lreg==2 && iterat==1
-    else
-        printf "* Sum of Squared Errors: %11.4f\n", sse
-        printf "* Within R^2: %18.4f\n", R2
-        printf "* Durbin-Watson: %12.4f\n", DW
-        printf "* Test on no serial correlation of order 1:\n"
-        printf "  Teststat = %3.4f \t Prob. = %3.4f\n", sercorr[1],sercorr[2]
-        printf "* Test on homoskedasticity:\n"
-        printf "  Teststat = %3.4f \t Prob. = %3.4f\n", hettest[1], hettest[2]
-        printf "* Test on no cross-sectional depend.:\n"
-        printf "  Teststat = %3.4f \t Prob. = %3.4f\n", csdeptest[1], csdeptest[2]
-        flush
-        printf "*******************************************************************************\n"
-    endif
-
-    set warnings on
-end function
-
 
 function void print_linear_model_estimates (const matrix beta_lin,
                           const matrix sehet_lin,
@@ -460,7 +303,7 @@ function void print_linear_model_estimates (const matrix beta_lin,
                           const matrix sse,
                           const strings strEXO,
                           const strings strREXO,
-                          int TF,
+                          int with_timeeffects,
                           scalar R2,
                           scalar DW,
                           const matrix hettest,
@@ -469,7 +312,7 @@ function void print_linear_model_estimates (const matrix beta_lin,
   /* */
 
     printf "\n***********************************\n"
-    if TF == 0
+    if with_timeeffects == 0
         printf "*	Linear Model  	 *\n"
     else
         printf "* Linear Model with time effects\n"
@@ -500,42 +343,215 @@ function void print_linear_model_estimates (const matrix beta_lin,
 end function
 
 
+function bundle default_tpm_values (void)
+   /* Set default values. */
+
+   bundle D
+
+   scalar D.nthresholds = 1
+   scalar D.with_timeeffects = TRUE
+   scalar D.nquantiles = 200   # Hansen (1999) qn=400
+   scalar D.nboot = 49 #199
+   # Hansen (1999) trim_1=0.01, trim_2=0.01, trim_3=0.05
+   matrix D.trimming_values = vec({0.01, 0.01, 0.05})
+  # 0<alpha<1: Choose a rather high value if you want to estimate the refinement coefficient values
+  scalar D.alpha = 0.5
+  scalar D.confidence_level = 0.95  # Hansen (1999) confidence_level=0.95
+
+   return D
+ end function
+
+
+function void print_model_estimates (const matrix beta_indep,
+                                    const matrix sehet_indep,
+                                    const matrix sehomo_indep,
+                                    const matrix beta_dep,
+                                    const matrix sehet_dep,
+                                    const matrix sehomo_dep,
+                                    const matrix rhats,
+                                    const matrix sse,
+                                    const matrix lrt,
+                                    const matrix lrcrits,
+                                    scalar lrprob,
+                                    const strings strEXO,
+                                    const strings strREXO,
+                                    int lreg,
+                                    int iterat,
+                                    scalar trimming_value,
+                                    scalar R2,
+                                    scalar DW,
+                                    const matrix hettest,
+                                    const matrix csdeptest,
+                                    const matrix sercorr,
+                                    const bundle self)
+    /* */
+
+    set warnings off
+
+    printf "\n"
+    string strTF = (self.with_timeeffects == TRUE) ? "With Time Effects" : ""
+
+    if lreg == 1
+        printf "*******************************************************************************\n"
+        printf "*************************\n"
+        printf "Single Threshold Model  *\n"
+        printf "*************************\n"
+        printf "%s\n", strTF
+        printf "Threshold Estimate = %12.5f\n", rhats[lreg, 2]
+        printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
+              (self.confidence_level * 100), minr(rhats[lreg,]), maxr(rhats[lreg,])
+
+    elif lreg == 2
+        printf "*******************************************************************************\n"
+        printf "*************************\n"
+        printf "Double Threshold Model *\n"
+        printf "*************************\n"
+        printf "%s\n", strTF
+        if iterat == 1
+            printf "*** First Iteration ***\n"
+            printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg-1,2]
+            printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
+            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
+                  (self.confidence_level * 100), minr(rhats[lreg,]), maxr(rhats[lreg,])
+        else
+            printf "*** Second Iteration ***\n"
+            printf "\nFixed Threshold(s) = %12.5f\n", rhats[lreg,2]
+            printf "Threshold Estimate = %12.5f\n", rhats[lreg-1,2]
+            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
+                  (self.confidence_level * 100), minr(rhats[lreg-1,]), maxr(rhats[lreg-1,])
+        endif
+
+    elif lreg == 3
+        printf "*******************************************************************************\n"
+        printf "*************************\n"
+        printf "Triple Threshold Model  *\n"
+        printf "*************************\n"
+        printf "%s\n", strTF
+        printf "Trimming Percentage \t %.3f", trimming_value
+        printf "\n"
+        if iterat == 1
+            printf "*** First Iteration ***\n"
+            printf "\nFixed Threshold(s) = %12.5f\n", rhats[1:lreg-1,2]'
+            printf "Threshold Estimate = %12.5f\n", rhats[lreg,2]
+            printf "Confidence Region (%d pct): \t MIN: %4.5f \t MAX: %4.5f\n",\
+                  (self.confidence_level * 100), minr(rhats[lreg,]), maxr(rhats[lreg,])
+        else
+            printf "*** Second Iteration ***\n"
+        endif
+    endif
+
+    printf "Sum of Squared Errors: %12.5f\n", sse
+    printf "Trimming Percentage = %12.3f\n", trimming_value
+
+    if iterat == 1
+        printf "LR-test statistics = %12.3f\n", lrt
+        printf "Number of bootstrap replications = %d\n", self.nboot
+        printf "Bootstrap p-value: \t %.3f\n", lrprob
+        rownames(lrcrits, "10pct 5pct 1pct")
+        printf "Critical Values: \t 10pct.=%4.3f\t5pct.=%4.3f\t1pct.=%4.3f\n",\
+                lrcrits[1], lrcrits[2], lrcrits[3]
+        printf "*******************************************************************************\n"
+    endif
+
+    printf "Regime-dependent variable(s): "
+    loop i=1..nelem(strREXO) -q
+        printf "%s ", strREXO[i]
+    endloop
+
+    printf "\n\nRegime-independent Coefficients\n"
+    matrix mtmp = beta_indep ~ (beta_indep./sehet_indep) ~ \
+                  sehomo_indep ~ sehet_indep
+
+    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
+    strings rname = defarray("Const")
+    rname += strEXO
+    rownames(mtmp, rname)
+    printf "%12.4f\n", mtmp
+    matrix rsorted = sort(rhats[,2])
+
+    printf "Regime-dependent Coefficients\n"
+    strings rname = null
+    if lreg == 1      # single threshold
+        loop i=1..nelem(strREXO) -q
+            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted)
+            rname += sprintf("%s*I*(Thresh>%.3f) ", strREXO[i], rsorted)
+        endloop
+
+    elif lreg == 2      # double threshold
+        loop i=1..nelem(strREXO) -q
+            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted[1])
+            rname += sprintf("%s*I*(%.3f<Thresh<=%.3f) ", strREXO[i],\
+                            rsorted[1], rsorted[2])
+            rname += sprintf("%s*I*(%.3f<Thresh) ", strREXO[i], rsorted[2])
+        endloop
+
+    elif lreg == 3      # triple threshold -- not yet implemented!
+      funcerr "Triple threshold model is not supported. Abort."
+    endif
+
+    matrix mtmp = beta_dep ~ (beta_dep./sehet_dep) ~ sehomo_dep ~ sehet_dep
+    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
+    rownames(mtmp,rname)
+    printf "%12.4f\n", mtmp
+
+    if lreg==2 && iterat==1
+    else
+        printf "* Sum of Squared Errors: %11.4f\n", sse
+        printf "* Within R^2: %18.4f\n", R2
+        printf "* Durbin-Watson: %12.4f\n", DW
+        printf "* Test on no serial correlation of order 1:\n"
+        printf "  Teststat = %3.4f \t Prob. = %3.4f\n", sercorr[1],sercorr[2]
+        printf "* Test on homoskedasticity:\n"
+        printf "  Teststat = %3.4f \t Prob. = %3.4f\n", hettest[1], hettest[2]
+        printf "* Test on no cross-sectional depend.:\n"
+        printf "  Teststat = %3.4f \t Prob. = %3.4f\n", csdeptest[1], csdeptest[2]
+        flush
+        printf "*******************************************************************************\n"
+    endif
+
+    set warnings on
+end function
+
+
+
 function bundle estimate_tpm (const series endo,
-                            const list exo,
-                            const list rexo,
-                            const series thresh,
-                            int nthresh[1:2:1] "Number of thresholds to test",
-                            const bool TF[TRUE] "add time-effects",
-                            int qn[10::200] "No. of quantiles to examine",
-                            int nrep[20::399] "No. of bootstrap replications",
-                            matrix trim "percentage to trim data before search",
-                            scalar alpha[0.001:0.99:0.1] "Signif. level of the threshold test before computing the refinement estimate",
-                            scalar conf_lev[0.01:0.99:0.95] "confidence level for threshold")
+                              const list exo,
+                              const list rexo,
+                              const series thresh,
+                              const bundle Options[null])
     /* Public main function calling the estimation procedure. */
 
     set warnings off
 
-    if nelem(rexo) > 1
-        printf "\nWarning: Currently only a single regime-dependent variable \n\
-                  can be defined in the list named rexo. Please, re-specify\n\
-                  your model.\n"
-        flush
+    self = default_tpm_values()
+    if exists(Options)
+      self = Options + self
     endif
 
-    errorif(nthresh > 2, "Currently only a double threshold model is at maximum supported.")
+    bundle OUT
 
-    trim = vec(trim)
-    errorif(rows(trim) != nthresh,\
+    if nelem(rexo) > 1
+      printf "\nWarning: Currently only a single regime-dependent variable \n\
+                can be defined in the list named rexo. Please, re-specify\n\
+                your model.\n"
+      flush
+    endif
+    errorif(self.nthresholds > 2, "Currently only a double threshold model is at maximum supported.")
+
+
+    self.trimming_values = vec(self.trimming_values)
+    errorif(rows(self.trimming_values) < self.nthresholds,\
           sprintf("The no. of threshold tests does not equal the no. of \n\
-                   entries in matrix 'trim'. Please correct this."))
+                   entries in matrix 'self.trimming_values'. Please correct this."))
 
     NT = $nobs
     list Lall = endo exo rexo thresh
     smpl Lall --balanced --no-missing # Make sure you have a balanced dataset
-
     errorif(NT != $nobs, "The panel data set is unbalanced.")
 
-    bundle OUT
+    self.NT = $nobs        # N*T
+    self.N = self.NT / min(pnobs(endo)) # no. of cross-sectional units
+    self.T = $pd                  # number time periods (T)
 
     strEXO = varnames(exo)
     strREXO = varnames(rexo)
@@ -543,70 +559,60 @@ function bundle estimate_tpm (const series endo,
     nrexo = nelem(rexo)
 
     # Prepare matrices to store some stuf for bundle output
-    matrix lrtest = zeros(nthresh, 1)
-    matrix lrprob = zeros(nthresh, 1)		# lr-test prob values: M1|M2|M3
-    matrix lrcrit = zeros(nthresh, 3) 	# lr-test bootstrapped criticial values: (10 pct~5pct~1pct)
-    matrix SSE = zeros(1 + nthresh, 1)
-    matrix R2 = zeros(1 + nthresh, 1)
-    matrix DW = zeros(1 + nthresh, 1)
-    matrix hettest = zeros(1 + nthresh, 2)
-    matrix csdeptest = zeros(1 + nthresh, 2)
-    matrix sercorr = zeros(1 + nthresh, 2)
+    matrix lrtest = zeros(self.nthresholds, 1)
+    matrix lrprob = zeros(self.nthresholds, 1)    # lr-test prob values: M1|M2|M3
+    matrix lrcrit = zeros(self.nthresholds, 3)  # lr-test bootstrapped criticial values: (10 pct~5pct~1pct)
+    matrix SSE = zeros(1 + self.nthresholds, 1)
+    matrix R2 = zeros(1 + self.nthresholds, 1)
+    matrix DW = zeros(1 + self.nthresholds, 1)
+    matrix hettest = zeros(1 + self.nthresholds, 2)
+    matrix csdeptest = zeros(1 + self.nthresholds, 2)
+    matrix sercorr = zeros(1 + self.nthresholds, 2)
 
-    loop lreg=1..nthresh -q
+    loop lreg=1..self.nthresholds -q
         # "1 + " refers to the intercept
         matrix beta_indep_T$lreg = zeros(1 + nexo, 1)
         matrix sehet_indep_T$lreg = zeros(1 + nexo, 1)
         matrix sehomo_indep_T$lreg = zeros(1 + nexo, 1)
     endloop
 
-    loop lreg=1..nthresh -q
+    loop lreg=1..self.nthresholds -q
         scalar nrexo = $lreg + 1
         matrix beta_dep_T$lreg = zeros(nrexo, 1)
         matrix sehet_dep_T$lreg = zeros(nrexo, 1)
         matrix sehomo_dep_T$lreg = zeros(nrexo, 1)
     endloop
 
-    nt = $nobs				# N*T
-    n = nt / min(pnobs(endo))	# no. of cross-sectional units
-    tt = $pd	             		# number time periods (tt)
-    OUT.nt = nt
-    OUT.n = n
-    OUT.tt = tt
-
     printf "*******************************************************\n"
     printf "Threshold Panel Dataset Details\n"
-    printf "Number of cross-sectional units \t %d\n", n
-    printf "Number of years effectivel used \t %d\n", tt
-    printf "Total observations \t %d\n", nt
-    printf "Number of quantiles evaluated \t %d\n", qn
-    printf "Confidence level  \t %.3f\n", conf_lev
+    printf "Number of cross-sectional units \t %d\n", self.N
+    printf "Number of years effectivel used \t %d\n", self.T
+    printf "Total observations \t %d\n", self.NT
+    printf "Number of quantiles evaluated \t %d\n", self.nquantiles
+    printf "Confidence level  \t %.3f\n", self.confidence_level
     printf "\n"
     printf "*******************************************************\n\n"
 
 
     # Set up the vector of potential thresholds
-    dd = values(thresh)			# all unique values of realizations
-    qnt1 = qn * trim[1]			# trim[i] = .01 --> percentage to trim before search
-    scalar inc = 1 / qn
-    matrix sq = trim[1] + 1 / qn * seq(0, (qn-2*qnt1+1)-1)'
-    qq1 = dd[floor(sq * rows(dd))]		# vector of quintile values
-    qn1 = rows(qq1)			        			# number of quintiles
-    cc = -2 * ln((1 - sqrt(conf_lev)))
-    if TF == 0
-        string strTF = ""
-    else
-        string strTF = "--time-dummies"
-    endif
+    dd = values(thresh)     # all unique values of realizations
+    # self.trimming_values[i] = .01 --> percentage to self.trimming_values before search
+    qnt1 = self.nquantiles * self.trimming_values[1]
+    scalar inc = 1 / self.nquantiles
+    matrix sq = self.trimming_values[1] + 1 / self.nquantiles * \
+                seq(0, (self.nquantiles -2 * qnt1 + 1) -1)'
+    qq1 = dd[floor(sq * rows(dd))]    # vector of quintile values
+    qn1 = rows(qq1)                   # number of quintiles
+    cc = -2 * ln((1 - sqrt(self.confidence_level)))
 
     # ESTIMATE BASELINE LINEAR estimate_and_bootstrap
-
+    string strTF = (self.with_timeeffects == FALSE) ? "--time-dummies" : ""
     # FE OLS S.E.
     panel endo const exo rexo --fixed-effects @strTF --quiet
-    OUT.sehomo_lin = $stderr
+    self.sehomo_lin = $stderr
 
     # FE + HAC robust S.E.
-    set pcse off			# set pcse on=Beck-Katz S.E.
+    set pcse off      # set pcse on=Beck-Katz S.E.
     panel endo const exo rexo --fixed-effects --robust @strTF --quiet
 
     bundle b = $model
@@ -614,14 +620,15 @@ function bundle estimate_tpm (const series endo,
     R2[1] = b.within_rsq
     DW[1] = b.dw
     series e = $uhat
-    OUT.beta_lin = $coeff
-    OUT.sehet_lin = $stderr
-    if TF==1
-        OUT.beta_lin = OUT.beta_lin[1:(nexo+nrexo-1)]
-        OUT.sehomo_lin = OUT.sehomo_lin[1:(nexo+nrexo-1)]
-        OUT.sehet_lin = OUT.sehet_lin[1:(nexo+nrexo-1)]
-    endif
+    self.beta_lin = $coeff
+    self.sehet_lin = $stderr
 
+    if self.with_timeeffects == TRUE
+        scalar ende = nexo + nrexo - 1
+        self.beta_lin = self.beta_lin[1:ende]
+        self.sehomo_lin = self.sehomo_lin[1:ende]
+        self.sehet_lin = self.sehet_lin[1:ende]
+    endif
 
     # Model specification tests based on HAC robust FE
     modtest --panel --silent
@@ -631,7 +638,7 @@ function bundle estimate_tpm (const series endo,
     csdeptest[1,] = $test ~ $pvalue
 
     list L1 = const exo rexo
-    if TF == 1
+    if self.with_timeeffects == TRUE
         genr timedum
         L1+=dt_*
     endif
@@ -640,14 +647,13 @@ function bundle estimate_tpm (const series endo,
 
 
     # PRINTOUT LINEAR estimate_and_bootstrap RESULTS
-    print_linear_model_estimates(OUT.beta_lin, OUT.sehet_lin,\
-                                 OUT.sehomo_lin, SSE[1], strEXO,\
-                                 strREXO, TF, R2[1], DW[1], hettest[1,],\
-                                 csdeptest[1,], sercorr[1,])
+    print_linear_model_estimates(self.beta_lin, self.sehet_lin,\
+                                 self.sehomo_lin, SSE[1], strEXO,\
+                                 strREXO, self.with_timeeffects, R2[1],\
+                                 DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
 
     # Start threshold procedure
-    loop lreg=1..nthresh -q		# Loop over specified # of max. thresholds
-
+    loop lreg=1..self.nthresholds -q    # Loop over specified # of max. thresholds
 
         # FIRST ITERATION:
         # Only for a double threshold model we run a refinement estimation
@@ -655,9 +661,9 @@ function bundle estimate_tpm (const series endo,
         if lreg == 1
             # Initial run assumes a zero threshold (updated/estimated later)
             # M1: (min~point~max) | M2: (min~point~max) | ...
-            matrix rhats = zeros(nthresh, 3)
+            matrix rhats = zeros(self.nthresholds, 3)
             # Store likelihood ratio over potential thresholds for each model
-            matrix lrstats = zeros(rows(qq1), nthresh)
+            matrix lrstats = zeros(rows(qq1), self.nthresholds)
         else
             #string stmp = sprintf("%d", ($lreg-1)) # NOT USED
         endif
@@ -665,19 +671,22 @@ function bundle estimate_tpm (const series endo,
         printf "\nThreshold Model with %d Threshold(s)\n", $lreg
         flush
 
-        bundle b = estimate_and_bootstrap(rhats[lreg,2], trim[lreg],\
-                                          nrep, qn, qq1, cc,\
-                                          endo, exo, rexo, thresh, strTF)
+        bundle b = estimate_and_bootstrap(rhats[lreg,2],\
+                                          self.trimming_values[lreg],\
+                                          self.nboot, self.nquantiles,\
+                                          qq1, cc, endo, exo, rexo, thresh,\
+                                          strTF)
 
         # Store information from b
         rhats[lreg,] = b.rhatCI
-        matrix lrstats[1:rows(b.lrstat),lreg] = b.lrstat
+        matrix lrstats[1:rows(b.lrstat), lreg] = b.lrstat
+
         # bootstrap is done in first iteration phase
         matrix lrprob[lreg] = b.lrprob
         matrix lrtest[lreg] = b.lrtest
         matrix lrcrit[lreg,] = b.lrcrit
-        SSE[1+lreg] = b.sse
-        R2[1+lreg] = b.r2
+        SSE[1 + lreg] = b.sse
+        R2[1 + lreg] = b.r2
         beta_indep_T$lreg = b.beta_regindep
         sehet_indep_T$lreg = b.sehet_regindep
         sehomo_indep_T$lreg = b.sehomo_regindep
@@ -698,10 +707,10 @@ function bundle estimate_tpm (const series endo,
         print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
                 sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg,\
                 sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg],\
-                lrtest[lreg], lrcrit[lreg,], lrprob[lreg], nrep, strEXO, \
-                strREXO, $lreg, 1, trim[lreg], R2[1+lreg], DW[1+lreg],\
-                hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,],\
-                TF, conf_lev)
+                lrtest[lreg], lrcrit[lreg,], lrprob[lreg], strEXO, \
+                strREXO, $lreg, 1, self.trimming_values[lreg], R2[1+lreg],\
+                DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,],\
+                sercorr[lreg+1,], self)
 
 
         /* SECOND ITERATION: Refinement estimate no bootstrapping needed,
@@ -711,13 +720,14 @@ function bundle estimate_tpm (const series endo,
 
         if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRES. estimate_and_bootstrap ATM!
             # Re-estimate the 1st threshold by conditioning on the latest one
-            bundle b = estimate_and_bootstrap(rhats[lreg,2],trim[lreg],0, qn, qq1, cc,\
-                             endo,exo,rexo,thresh,strTF)
+            bundle b = estimate_and_bootstrap(rhats[lreg,2],\
+                                              self.trimming_values[lreg],\
+                                              0, self.nquantiles, qq1,\
+                                              cc, endo, exo, rexo, thresh,\
+                                              strTF)
 
-
-            if lrprob[lreg] <= alpha
+            if lrprob[lreg] <= self.alpha
                 # Only now update using the refinement estimate
-
                 # Refinement estimate of 1st threshold value
                 rhats[(lreg - 1),] = b.rhatCI
                 # update the 1st threshold estimates
@@ -738,32 +748,33 @@ function bundle estimate_tpm (const series endo,
             R2[1+lreg] = b.r2
 
             print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
-                    sehomo_indep_T$lreg, beta_dep_T$lreg,\
-                    sehet_dep_T$lreg, sehomo_dep_T$lreg,\
-                    rhats[1:lreg,], SSE[1+lreg], lrtest[lreg],\
-                    lrcrit[lreg,], lrprob[lreg], nrep, strEXO,\
-                    strREXO, $lreg, 2, trim[lreg], R2[1+lreg], DW[1+lreg],\
-                    hettest[lreg+1,], csdeptest[lreg+1,],\
-                    sercorr[lreg+1,], TF, conf_lev)
+                                  sehomo_indep_T$lreg, beta_dep_T$lreg,\
+                                  sehet_dep_T$lreg, sehomo_dep_T$lreg,\
+                                  rhats[1:lreg,], SSE[1+lreg], lrtest[lreg],\
+                                  lrcrit[lreg,], lrprob[lreg],\
+                                  strEXO, strREXO, $lreg, 2,\
+                                  self.trimming_values[lreg], R2[1+lreg],\
+                                  DW[1+lreg], hettest[lreg+1,],\
+                                  csdeptest[lreg+1,], sercorr[lreg+1,], self)
         endif
 
-        OUT.beta_indep_T$lreg = beta_indep_T$lreg
-        OUT.sehet_indep_T$lreg = sehet_indep_T$lreg
-        OUT.sehomo_indep_T$lreg = sehomo_indep_T$lreg
-        OUT.beta_dep_T$lreg = beta_dep_T$lreg
-        OUT.sehet_dep_T$lreg = sehet_dep_T$lreg
-        OUT.sehomo_dep_T$lreg = sehomo_dep_T$lreg
-        OUT.rhats = rhats
+        self.beta_indep_T$lreg = beta_indep_T$lreg
+        self.sehet_indep_T$lreg = sehet_indep_T$lreg
+        self.sehomo_indep_T$lreg = sehomo_indep_T$lreg
+        self.beta_dep_T$lreg = beta_dep_T$lreg
+        self.sehet_dep_T$lreg = sehet_dep_T$lreg
+        self.sehomo_dep_T$lreg = sehomo_dep_T$lreg
+        self.rhats = rhats
     endloop
 
     # BUNDLE elements for output
-    if nthresh == 1
+    if self.nthresholds == 1
         strings Srnam = defarray("Linear Model", "Single Threshold")
         strings Srnam2 = defarray("Single Threshold")
-    elif nthresh == 2
+    elif self.nthresholds == 2
         strings Srnam = defarray("Linear Model", "Single Threshold", "Dual Threshold")
         strings Srnam2 = defarray("Single Threshold", "Dual Threshold")
-    elif nthresh == 3
+    elif self.nthresholds == 3
         strings Srnam = defarray("Linear Model", "Single Threshold", "Dual Threshold", "Quad. Threshold")
         strings Srnam2 = defarray("Single Threshold", "Dual Threshold", "Quad. Threshold")
     endif
@@ -771,77 +782,76 @@ function bundle estimate_tpm (const series endo,
     strings Scnam2 = defarray("Test stat.", "Prob.")
     rownames(DW, Srnam)
     colnames(DW, "DW")
-    OUT.DW = DW
+    self.DW = DW
     rownames(hettest, Srnam)
     colnames(hettest, Scnam2)
-    OUT.hettest = hettest
+    self.hettest = hettest
     rownames(csdeptest, Srnam)
     colnames(csdeptest, Scnam2)
-    OUT.csdeptest = csdeptest
+    self.csdeptest = csdeptest
     rownames(sercorr, Srnam)
     colnames(sercorr, Scnam2)
-    OUT.sercorr = sercorr
+    self.sercorr = sercorr
     rownames(lrtest, Srnam2)
     rownames(lrprob, Srnam2)
     rownames(lrcrit, Srnam2)
     colnames(lrcrit, "90pct. 95pct. 99pct.")
     rownames(SSE, Srnam)
     rownames(SSE, Srnam)
-    OUT.lrstats = lrstats
-    OUT.lrtest = lrtest
-    OUT.lrprob = lrprob
-    OUT.lrcrit = lrcrit
-    OUT.qq = qq1
-    OUT.SSE = SSE
-    OUT.R2 = R2
-    OUT.T = tt
-    OUT.N = n
+    self.lrstats = lrstats
+    self.lrtest = lrtest
+    self.lrprob = lrprob
+    self.lrcrit = lrcrit
+    self.qq = qq1
+    self.SSE = SSE
+    self.R2 = R2
 
-    return OUT
+    return self
 end function
 
 
-function void plot_thresholds (matrix lrstats "LR test stats. for threshold.",
-                              const matrix qq "Threshold values evaluated",
-                              string fname "Path + file name for storing graphs")
+function void plot_thresholds (const bundle self "Return by estimate_tpm()",
+                               const string path[null] "Directory for storing plots")
     /* Plot thresholds estimation results plus confidence intervals.
       Asymptotic distribution of threshold estimate. */
 
+    matrix lrstats = (self.lrstats .< 1000) .* self.lrstats
+    nrows_qq = rows(self.qq)
+
     # 10%, 5 and 1% critical value for H0: gamma=gamma_0
     matrix cc = {6.53, 7.35, 10.59}
-    lrstats = (lrstats .< 1000) .* lrstats
-    rows_qq = rows(qq)
 
     loop nplot=1..cols(lrstats) -q
 
-        matrix mtmp = ones(rows_qq, cols(cc)) .* cc
-        matrix mplot = lrstats[,nplot] ~ mtmp ~ qq
-        colnames(mplot, "LR-Ratio 90pct. 95pct. 99pct. qq")
+        matrix mtmp = ones(nrows_qq, cols(cc)) .* cc
+        matrix mplot = lrstats[,nplot] ~ mtmp ~ self.qq
+        colnames(mplot, "LR-Ratio 90pct. 95pct. 99pct. self.qq")
 
-        if fname == "display"
-            string fout = fname
+        if exists(fname)
+            string filename = sprintf("%s/ThresholdPanel_CI_No=%d.png",\
+                                path, $nplot)
         else
-            fout = sprintf("@fname/ThresholdPanel_CI_No=%d.png", $nplot)
+            string filename = "display"
         endif
 
         plot mplot
             options with-lines fit=none single-yaxis
             #literal set term png font 'Helvetica,13'
             printf "set title 'Confidence Interval Construction: %d Threshold Model' font 'serif,13'", cols(lrstats)
-            printf "set xlabel '%d Threshold Parameter' font 'Helvetica,13'",\
+            printf "set xlabel 'Threshold Parameter no. %d' font 'Helvetica,13'",\
                   $nplot
 
             literal set key outside below font 'Helvetica,13' #top right
             literal set y2tics
-            #literal set xtics out offset 0,-0.5			# Move xtics cloer to the x-axis
+            #literal set xtics out offset 0,-0.5      # Move xtics cloer to the x-axis
             literal set ytics out
             #2) put the border more to the background by applying it
             # only on the left and bottom part and put it and the tics in gray
             literal set style line 11 lc rgb "#808080" lt 1
-            literal set border 3 back ls 11			# get rid of upper + left border
+            literal set border 3 back ls 11     # get rid of upper + left border
             literal set tics nomirror
             #add a slight grid to make it easier to follow the exact position of the curves
-            literal set style line 12 lc rgb "#808080" lt 0 lw 1	# light grey color
+            literal set style line 12 lc rgb "#808080" lt 0 lw 1  # light grey color
             literal set grid back ls 12
             # Line Styles
             literal set for [i=1:5] linetype i dashtype i
@@ -849,7 +859,7 @@ function void plot_thresholds (matrix lrstats "LR test stats. for threshold.",
             literal set linetype 2 lc rgb "black" lw 2.0
             literal set linetype 3 lc rgb "black" lw 2.0
             literal set linetype 4 lc rgb "black" lw 2.0
-        end plot --output="@fout"
+        end plot --output="@filename"
 
     endloop
 end function

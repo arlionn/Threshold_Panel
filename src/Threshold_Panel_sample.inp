@@ -41,6 +41,7 @@ rename v4 debta
 #------------------------
 # SET UP MODEL PARAMETERS
 #------------------------
+/*
 scalar nthresh = 2                      # Max. # of thresholds to test, Hansen (1999) ntresh=3
 scalar qn = 100                         # Hansen (1999) qn=400
 scalar nrep = 100                       # Hansen (1999) nrep=300
@@ -48,13 +49,13 @@ matrix trim = {0.01, 0.01}              # Hansen (1999) trim_1=0.01, trim_2=0.01
 scalar alpha = 0.5                      # 0<alpha<1: Choose a rather high value if you want to estimate the refinement coefficient values
 scalar conf_lev = 0.95                  # Hansen (1999) conf_lev=0.95
 scalar TF = 0                           # Time-effects: 0=NO (Hansen, 1999), 1=YES
-
+*/
 #--------------------------------
 # Shrink dataset for illustration
 # Note: Using the complete sample
 # takes a very long time
 #--------------------------------
-smpl 1:01 25:15
+smpl 1:01 15:15
 
 #------------------------------
 # Set up the series of interest
@@ -74,11 +75,10 @@ smpl Lall --balanced --no-missing
 #-------------------
 # Run the procedure
 #-------------------
+bundle opts = _(nthresholds = 2, nboot=100, nquantiles = 100)
 set stopwatch
-bundle B = estimate_tpm(inva,exo1,rexo1,thresh, \
-  nthresh, TF, qn, nrep, trim, alpha, conf_lev)
+bundle B = estimate_tpm(inva, exo1, rexo1, thresh, opts)
 printf "\n This took %.2f seconds\n", $stopwatch
-stop
 
 #---------------
 # Bundle output
@@ -90,7 +90,4 @@ print B
 # jointly with the 'no-rejection region' using the
 # likelihood ratio statistic for tests on gamma.
 #---------------------------------------------------
-matrix qq = B.qq            # thresholds tested
-matrix lrstats = B.lrstats  # LR test statistics
-string fname = "display"    # Path+filename or "display"
-lrplot(lrstats, qq, fname)
+plot_thresholds(B)
