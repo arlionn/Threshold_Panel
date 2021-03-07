@@ -1,0 +1,129 @@
+ This package is an implementation of Bruce E. Hansen's panel-threshold model.
+
+Reference:
+"Threshold effects in non-dynamic panels: Estimation, testing, and inference", published in Journal of Econometrics 93 (1999) 345-368.
+URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
+
+
+*** NOTE 1: Be aware that the use of version 1.0 in comparison to
+vers. 0.921 has fundamentally changed.
+
+*** NOTE 2: This package requires the user-written external
+package "wooldridge_test_serial.gfn" which has to be called
+by the user
+<hansl>
+	install wooldridge_test_serial only the 1st time!
+include wooldridge_test_serial.gfn
+</hansl>
+
+
+MAIN FUNCTION:
+	Format: {BUNDLE} = THRESH_SETUP(ENDO, EXO, REXO, THRESH,\
+		nthresh, TF, qn, nrep, trim, alpha, conf_lev)
+
+Input:
+endo 		- series, endogenous
+exo		- list, regime-independend regressors
+rexo		- list, regime-dependend exogenous (currently only 1 entry supported!)
+thresh		- series, threshold variable
+nthresh		- int, number of thresholds to test (1 or 2)
+TF		- int, add time effects: 0=NO, 1=YES
+qn		- int, number of quintiles of thresh to examine
+nrep		- int, number of bootstrap replications
+trim		- matrix, "1 by nthresh" vector of percentages to
+		trim before running each each model, e.g. {0.01, 0.01, 0.05}
+alpha		- scalar, compute the refinement estimates only if the
+		p-value of the double threshold test is smaller than "alpha"
+conf_level	- scalar, width of the confidence interval for the test
+		on threshold equality
+
+Output: {BUNDLE}
+beta_lin	- matrix, (1+k) by 1 vector of estim. coefficients
+		of linear benchmark model with intercept + k regressors
+sehomo_lin	- matrix of OLS S.E. of estimated linear benachmark model
+sehet_lin	- matrix of HAC-robust S.E. of estimated linear
+		benachmark model
+beta_indep_Tx	- matrix, k by 1 of regime-independent coeff. for model with
+		x regimes
+sehet_indep_Tx	- matrix of HAC-robust S.E. of reg.-indep. coeff. for model
+		with x regimes
+sehomo_indep_Tx	- matrix of OLS S.E. of reg.-indep. coeff. for model with
+		x regimes
+beta_dep_Tx	- matrix, n by 1 of regime-dependent coeff. for model with
+		x regimes
+sehet_dep_Tx	- matrix of HAC-robust S.E. of reg.-dep. coeff. for model
+		with x regimes
+sehomo_dep_Tx	- matrix of OLS S.E. of reg.-dep. coeff. for model with
+		x regimes
+qq		- matrix, vector of potential threshold values
+rhats		- matrix of estimated thresholds for all threshold
+		models (see row names for more details)
+lrstats		- matrix, qn by nthresh storing likelihood ratio statistics
+		for all threshold values for each model
+		(refinement value if ran)
+lrtest		- matrix, nr by 1 holding the LR-test statistics for nr
+		threshold models
+lrprob		- matrix, nr by 1 holding the bootstrap pvalues of the
+		LR-test for nr threshold models
+lrcrit		- matrix, nr by 3 holding the bootstrap criticial values:
+		(10pct~5pct~1pct) for nr threshold models
+SSE		- matrix of SSEs of linear benchmark|single|double
+		threshold models
+n		- scalar, no. of cross-section units
+tt		- scalar, no. of valid (actually used) observations
+nt		- scalar, n*tt
+R2		- matrix, within R^2 of linear|single|double threshold
+		models (see row names)
+DW		- matrix, Durbin-Watson test statistics of
+		linear|single|double threshold models (see rown names)
+csdeptes	- matrix, test results on no cross-sectional dependence
+		(test~pvalue) for linear|single|double threshold models
+sercorr		- matrix, test results on serial corr. (order 1)
+		(test~pvalue) for linear|single|double threshold models
+hettest		- matrix, test results of no heteroskedasticity (test~pvalue) for
+		linear|single|double threshold models
+
+
+FUNCTION PLOTTING LR STATISTICS VS. THRESHOLD PARAMETERS
+Format: lrplot(lrstats, qq, fname)
+
+Input:
+lrstats		- matrix, rows(qq) by nthresh holding the LR test stats
+		for threshold (cols) over all threshold values (rows)
+qq		- matrix, col.vector holding the evaluated threshold parameters
+fname		- string, Path (e.g. "/home/$USER/gretl") where to store
+		the figures	(will be named ThresholdPanel_CI_No=X.png"
+		where X is the no. of threshold); or use the "display" option
+
+
+CHANGELOG:
+----------
+
+1.1 (June 2018)
+- Drop "lrcrit" input for lrplot() -- USER must correct their code!
+- 10%/5%/1% critical values for the LR-test on threshold equality
+(h0: gamma=gamm0) are now plotted as in Hansen (1999)
+- minor improvements and fix of a potential bug in THRESH_SETUP()
+
+1.0 (Dez. 2016)
+- Minor corrections
+
+0.923 (Oct. 2016)
+- Total package revamp
+- Now using gretl's internal panel toolbox
+
+0.922 (Mai 2016)
+- Add "sse[qi]= $huge"
+
+0.921 (August 2015)
+- cleanining up the code
+- get rid of the seqa() function
+0.92 (August 2015)
+- cleanining up the code
+- solve some bugs which let to collinearity issues
+- speeding-up by vectorizing stuff and using internal functions
+- bug in the resamling procedure to bootstrap the test statistics
+
+TODO:
+	- Allow for more than a single regime-dependent variable
+
