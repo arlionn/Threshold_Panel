@@ -37,8 +37,8 @@ function matrix compute_sse_of_thresholds (const series endo,
 
     matrix sse = zeros(rows(q), 1)
 
-  matrix mat_thresh = {thresh}
-  matrix mat_rexo = {rexo}
+    matrix mat_thresh = {thresh}
+    matrix mat_rexo = {rexo}
 
     loop qi=1..rows(q) -q
         if r == 0
@@ -49,7 +49,7 @@ function matrix compute_sse_of_thresholds (const series endo,
         rr = msortby(rr, 1)
 
         list INT = null
-        matrix mINT = intvar(rr, mat_thresh, mat_rexo)
+        matrix mINT = get_interaction_terms(rr, mat_thresh, mat_rexo)
 
         loop i=1..cols(mINT) -q
             INT += genseries(sprintf("S%d", $i), mINT[,i])
@@ -72,17 +72,18 @@ function matrix qqsel (const matrix q "Col. vector",
     return selifr(q, C)
 end function
 
-function matrix intvar (matrix r,
-                        matrix thresh,
-                        matrix rexo)
+
+function matrix get_interaction_terms (matrix r,
+                                      const matrix thresh,
+                                      const matrix rexo)
     /* Construct interaction term. */
 
     matrix r = vec(r)
     r = msortby(r, 1)
     nr = rows(r)
     T = rows(thresh)
-    matrix D = zeros(T, (nr+1))
-    ncols = cols(rexo) * (nr+1)
+    matrix D = zeros(T, (nr + 1))
+    ncols = cols(rexo) * (nr + 1)
     matrix INT = zeros(T, ncols)
 
     if nr == 1
@@ -96,61 +97,63 @@ function matrix intvar (matrix r,
 
     loop j=1..cols(rexo) -q
         loop k=1..cols(D) -q
-            INT[,k+j-1] = D[,k] .* rexo[,j]
+            INT[,(k + j - 1)] = D[,k] .* rexo[,j]
         endloop
     endloop
 
     return INT
 end function
 
-function bundle MODEL (matrix r,
-                      scalar trim,
-                      int nrep,
-                      scalar qn,
-                      matrix qq1,
-                      scalar cc,
-                      series endo,
-                      list exo,
-                      list rexo,
-                      series thresh,
-                      string strTF "Time effects")
-    /* */
+
+function bundle estimate_and_bootstrap (const matrix threshold_values,
+                                      scalar trim,
+                                      int nrep,
+                                      scalar qn,
+                                      const matrix qq1,
+                                      scalar cc,
+                                      const series endo,
+                                      const list exo,
+                                      const list rexo,
+                                      const series thresh,
+                                      const string strTF "Time effects")
+    /* Do all the heavy lifting. */
 
     set warnings off
 
     bundle mout
-    nt = $nobs				# N*T
-    n = nt / min(pnobs(endo))	    # no. of cross-sectional units
-    tt = nt / n	            			# Effective no. oftime periods (tt)
+
+    nt = $nobs        # N*T
+    n = nt / min(pnobs(endo))     # no. of cross-sectional units
+    tt = nt / n                   # Effective no. oftime periods (tt)
     scalar qn1 = rows(qq1)
     scalar nexo = nelem(exo)
     scalar nrexo = nelem(rexo)
-    if maxc(r) == 0   						# Single threshold case
+    if maxc(threshold_values) == 0              # Single threshold case
         qq = qq1
-        matrix rr = 0	    				# rr are the fixed thresholds
-    else								          # Multiple threshold case
-        matrix rr = msortby(r, 1)
+        matrix rr = 0             # rr are the fixed thresholds
+    else                          # Multiple threshold case
+        matrix rr = msortby(threshold_values, 1)
         qq = qqsel(qq1, vec(rr))
     endif
 
     sse = compute_sse_of_thresholds(endo, exo, rexo, thresh, strTF, qq, rr)
     rihat = iminc(sse)'
-    matrix rhat = qq[rihat]	        # Estimated threshold value
-    matrix sse1 = sse[rihat]		# SSE conditional on newly determined threshold
+    matrix rhat = qq[rihat]         # Estimated threshold value
+    matrix sse1 = sse[rihat]    # SSE conditional on newly determined threshold
     lr = (sse/sse1- 1) * nt
-    rhats = selifr(qq, (lr .< cc))					# For determination of CIs of rhat
+    rhats = selifr(qq, (lr .< cc))          # For determination of CIs of rhat
     mout.lrstat = lr
     mout.sse = sse1
-    if maxc(r) != 0
+    if maxc(threshold_values) != 0
         matrix rrr = msortby((rr|rhat), 1)
     else
-        matrix rrr = rhat							# rrr comprises rr and new rhat
+        matrix rrr = rhat             # rrr comprises rr and new rhat
     endif
     trrr = rrr'
     mout.rhatCI = (minc(rhats)|rhat|maxc(rhats))'
 
     # Construct the interaction terms
-    matrix mINT = intvar(rrr, {thresh}, {rexo})
+    matrix mINT = get_interaction_terms(rrr, {thresh}, {rexo})
     list INT = null
     loop i=1..cols(mINT) -q
         series S$i = mINT[,i]
@@ -203,7 +206,7 @@ function bundle MODEL (matrix r,
         previously estimated thresholds rr. */
 
         if abs(maxc(rr)) > 0
-            matrix mINT = intvar(rr, {thresh}, {rexo})
+            matrix mINT = get_interaction_terms(rr, {thresh}, {rexo})
             list INT = null
             loop i=1..cols(mINT) -q
                 series S$i = mINT[,i]
@@ -237,11 +240,11 @@ function bundle MODEL (matrix r,
                                   trim, qq1, qn1, qn)
             matrix sse1 = mrestA[1]
             rhat_b = mrestA[2]
-            rrr = rhat_b			# estimated threshold based on bootstrap sample
+            rrr = rhat_b      # estimated threshold based on bootstrap sample
 
             # Search for additional thresholds and run the refinement estimation
-            if abs(maxc(r)) > 0
-                loop jj=1..rows(r) -q
+            if abs(maxc(threshold_values)) > 0
+                loop jj=1..rows(threshold_values) -q
                     matrix sse0 = sse1
                     matrix mrestB = compute_optimal_threshold(yb, exo, rexo, thresh, strTF,\
                                           rrr, trim, qq1, qn1, qn)
@@ -251,7 +254,7 @@ function bundle MODEL (matrix r,
                 endloop
             endif
 
-            stats[j] = (sse0/sse1 - 1) * nt	  # test stat. for H0: b1=b2
+            stats[j] = (sse0/sse1 - 1) * nt   # test stat. for H0: b1=b2
             if j == 1
                 printf "\nBootstrap iterations of %d: \n",  nrep
                 flush
@@ -286,6 +289,8 @@ function bundle MODEL (matrix r,
 
     return mout
 end function
+
+
 
 function void printout (matrix beta_indep,
                         matrix sehet_indep,
@@ -593,7 +598,7 @@ function bundle estimate_tpm (const series endo,
         string strTF = "--time-dummies"
     endif
 
-    # ESTIMATE BASELINE LINEAR MODEL
+    # ESTIMATE BASELINE LINEAR estimate_and_bootstrap
 
     # FE OLS S.E.
     panel endo const exo rexo --fixed-effects @strTF --quiet
@@ -633,7 +638,7 @@ function bundle estimate_tpm (const series endo,
     sercorr[1,] = mwool[2:]
 
 
-    # PRINTOUT LINEAR MODEL RESULTS
+    # PRINTOUT LINEAR estimate_and_bootstrap RESULTS
     linprintout(OUT.beta_lin, OUT.sehet_lin, OUT.sehomo_lin, SSE[1], strEXO,\
       strREXO, TF, R2[1], DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
 
@@ -657,7 +662,7 @@ function bundle estimate_tpm (const series endo,
         printf "\nThreshold Model with %d Threshold(s)\n", $lreg
         flush
 
-        bundle b = MODEL(rhats[lreg,2], trim[lreg], nrep, qn, qq1, cc,\
+        bundle b = estimate_and_bootstrap(rhats[lreg,2], trim[lreg], nrep, qn, qq1, cc,\
                         endo, exo, rexo, thresh, strTF)
 
         # Store information from b
@@ -700,9 +705,9 @@ function bundle estimate_tpm (const series endo,
         NOTE: For the moment, we run the refinement estimation only for
         the double threshold model as in Hansen (1999). */
 
-        if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRES. MODEL ATM!
+        if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRES. estimate_and_bootstrap ATM!
             # Re-estimate the 1st threshold by conditioning on the latest one
-            bundle b = MODEL(rhats[lreg,2],trim[lreg],0, qn, qq1, cc,\
+            bundle b = estimate_and_bootstrap(rhats[lreg,2],trim[lreg],0, qn, qq1, cc,\
                              endo,exo,rexo,thresh,strTF)
 
 
