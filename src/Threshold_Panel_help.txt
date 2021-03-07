@@ -118,6 +118,7 @@ CHANGELOG:
 - Replace "stop" by errorif() function.
 - Internal refactoring and re-formating (about 5% gain of speed).
 - Update help file.
+- Minimum required version is 2020b now.
 
 1.1 (June 2018)
 - Drop "lrcrit" input for lrplot() -- USER must correct their code!
