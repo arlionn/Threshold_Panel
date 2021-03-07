@@ -296,18 +296,18 @@ end function
 
 
 function void print_linear_model_estimates (const matrix beta_lin,
-                          const matrix sehet_lin,
-                          const matrix sehomo_lin,
-                          const matrix sse,
-                          const strings strEXO,
-                          const strings strREXO,
-                          int with_timeeffects,
-                          scalar R2,
-                          scalar DW,
-                          const matrix hettest,
-                          const matrix csdeptest,
-                          const matrix sercorr)
-  /* */
+                                          const matrix sehet_lin,
+                                          const matrix sehomo_lin,
+                                          const matrix sse,
+                                          const strings strEXO,
+                                          const strings strREXO,
+                                          int with_timeeffects,
+                                          scalar R2,
+                                          scalar DW,
+                                          const matrix hettest,
+                                          const matrix csdeptest,
+                                          const matrix sercorr)
+    /* */
 
     printf "\n***********************************\n"
     if with_timeeffects == 0
@@ -511,11 +511,11 @@ function void print_model_estimates (const matrix beta_indep,
 end function
 
 
-function bundle estimate_tpm (const series endo,
-                              const list exo,
-                              const list rexo,
-                              const series thresh,
-                              const bundle Options[null])
+function bundle estimateTpm (const series endo,
+                             const list exo,
+                             const list rexo,
+                             const series thresh,
+                             const bundle Options[null])
     /* Public main function calling the estimation procedure. */
 
     set warnings off
@@ -809,7 +809,7 @@ function bundle estimate_tpm (const series endo,
 end function
 
 
-function void plot_tpm (const bundle self "Return by estimate_tpm()",
+function void plotTpm (const bundle self "Return by estimateTpm()",
                        const string path[null] "Directory for storing plots")
     /* Plot thresholds estimation results plus confidence intervals.
       Asymptotic distribution of threshold estimate. */

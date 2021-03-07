@@ -1,7 +1,8 @@
 This package is an implementation of Bruce E. Hansen's panel-threshold model.
 
 Reference:
-"Threshold effects in non-dynamic panels: Estimation, testing, and inference", published in Journal of Econometrics 93 (1999) 345-368.
+"Threshold effects in non-dynamic panels: Estimation, testing, and inference",
+published in Journal of Econometrics 93 (1999) 345-368.
 URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 
 
@@ -9,7 +10,7 @@ URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 Public functions
 =================
 
-estimate_tpm(endo, exo, rexo, thresh, opts[null])
+estimateTpm(endo, exo, rexo, thresh, opts[null])
 -------------------------------------------------
 Parameters:
 endo         - series, endogenous series
@@ -22,10 +23,10 @@ opts         - bundle, Configure estimation parameters (optional)
 Returns: Bundle comprising various information.
 
 
-plot_tpm(model, path[null])
+plotTpm(model, path[null])
 ---------------------------
 Parameters:
-model        - bundle, returned bundle from estimate_tpm() function
+model        - bundle, returned bundle from estimateTpm() function
 path         - string, Directory where to store plots (optional). If not
                specified, plots appear immediately on screen. If specified,
                the figure(s) will be named "ThresholdPanel_CI_No=X.png"
@@ -51,15 +52,17 @@ The following default parameters are set:
 
 The "opts" parameter bundle
 ============================
-The user can pass various parameters to estimate_tmp() to over-write the default values listed above.
+The user can pass various parameters to estimateTpm() to over-write the
+default values listed above.
 To do so, you simple pass a bundle where the key must match the name of
 the parameter you want to replace by a specific value. See the sample script
 for an illustration.
 
 
-Items of the bundle returned after estimation by estimate_tpm()
+Items of the bundle returned after estimation by estimateTpm()
 ===============================================================
-Apart from all parameters set (See section entitled "Default model and estimation values"), many further information are returned:
+Apart from all parameters set (See section entitled "Default model and
+estimation values"), many further information are returned:
 
 N                - Number of cross-section units
 T                - Number of  of valid (actually used) observations
@@ -113,8 +116,10 @@ CHANGELOG:
 ----------
 
 2.0 (March 2021)
-- Changed API: Replace function SETUP_THRESH() to estimate_tpm().
-- Changed API: Replace function lrplot() by plot_tmp().
+- Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
+  arguments.
+- Changed API: Rename function lrplot() by plotTpm() and change
+  arguments.
 - Replace "stop" by errorif() function.
 - Internal refactoring and re-formating (about 5% gain of speed).
 - Update help file.
