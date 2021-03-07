@@ -10,3 +10,4 @@ help = Threshold_Panel_help.txt
 sample-script = Threshold_Panel_sample.inp
 data-requirement = needs-panel-data
 data-files = ThresholdPanel_data_joe99.gdt
+depends = wooldridge_test_serial

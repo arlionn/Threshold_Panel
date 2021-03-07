@@ -12,7 +12,6 @@ clear
 include Threshold_Panel.gfn
 open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 
-
 # Define a panel data set + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
 rename v1 inva

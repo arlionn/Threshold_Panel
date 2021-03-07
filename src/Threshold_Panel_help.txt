@@ -13,8 +13,8 @@ estimate_tpm(endo, exo, rexo, thresh, opts[null])
 -------------------------------------------------
 Parameters:
 endo         - series, endogenous series
-exo          - list, regime-independend regressors
-rexo         - list, regime-dependend exogenous (currently only single
+exo          - list, regime-independent regressors
+rexo         - list, regime-dependent exogenous (currently only single
                entry supported)
 thresh       - series, threshold variable
 opts         - bundle, Configure estimation parameters (optional)
@@ -25,8 +25,8 @@ Returns: Bundle comprising various information.
 plot_tpm(model, path[null])
 ---------------------------
 Parameters:
-model        - bundle, returned bundlde from estimate_tpm() function
-path         - string, Diretory where to store plots (optional). If not
+model        - bundle, returned bundle from estimate_tpm() function
+path         - string, Directory where to store plots (optional). If not
                specified, plots appear immediately on screen. If specified,
                the figure(s) will be named "ThresholdPanel_CI_No=X.png"
                where X refers to the number of thresholds.
@@ -38,17 +38,16 @@ Default model and estimation values
 ===================================
 The following default parameters are set:
 
-- <nthresholds = 1>: Number of thresholds, default: 1
-- <with_timeeffects = TRUE>: Estimate model tith time-effects, default: TRUE
-- <scalar nquantiles = 200>: Number of quantiles to analys, default: 200
-- <scalar nboot = 299>: Number of boostrap replications, default: 299
-   # Hansen (1999) trim_1=0.01, trim_2=0.01, trim_3=0.05
-- <matrix trimming_values = vec({0.01, 0.01, 0.05})>: Percentages to trim
-   the sample start and end for each of max. three thresholds.
-- <scalar alpha = 0.5>: Choose a rather high value if you want to estimate
-   the refinement coefficient values.
-- <scalar confidence_level = 0.95>: Level of confidence for threshold
-   estimates
+- nthresholds = 1:          Number of thresholds, default: 1
+- with_timeeffects = TRUE:  Estimate model with time-effects, default: TRUE
+- nquantiles = 200:         Number of quantiles to analyze, default: 200
+- nboot = 299:              Number of bootstrap replications, default: 299
+- trimming_values = vec({0.01, 0.01, 0.05}): Percentages to trim the
+                                             sample start and end for each
+                                             of max. three thresholds.
+- alpha = 0.5:              Choose a rather high value if you want to
+                            estimate the refinement coefficient values.
+- confidence_level = 0.95:  Level of confidence for threshold estimates
 
 The "opts" parameter bundle
 ============================
@@ -66,11 +65,11 @@ N                - Number of cross-section units
 T                - Number of  of valid (actually used) observations
 NT               - N * T
 
-beta_lin         - matrix, (1+k) by 1 vector of estim. coefficients of
+beta_lin         - matrix, (1+k) by 1 vector of estimated coefficients of
                    linear benchmark model with intercept + k regressors
-sehomo_lin       - matrix of OLS S.E. of estimated linear benachmark model
+sehomo_lin       - matrix of OLS S.E. of estimated linear benchmark model
 sehet_lin        - matrix of HAC-robust S.E. of estimated linear
-                   benachmark model
+                   benchmark model
 beta_indep_Tx    - matrix, k by 1 of regime-independent coeff. for model
                    with x regimes
 sehet_indep_Tx   - matrix of HAC-robust S.E. of reg.-indep. coeff. for
@@ -93,14 +92,14 @@ lrtest           - nr by 1 matrix holding the LR-test statistics for nr
                    threshold models
 lrprob           - matrix, nr by 1 holding the bootstrap pvalues of the
                    LR-test for nr threshold models
-lrcrit           - matrix, nr by 3 holding the bootstrap criticial values:
+lrcrit           - matrix, nr by 3 holding the bootstrap critical values:
                    (10pct ~ 5pct ~ 1pct) for nr threshold models
 SSE              - matrix of SSEs of linear benchmark|single|double
                    threshold models
 R2               - matrix, within R^2 of linear|single|double threshold
                    models (see row names)
 DW               - matrix, Durbin-Watson test statistics of
-                   linear|single|double threshold models (see rown names)
+                   linear|single|double threshold models
 csdeptes         - matrix, test results on no cross-sectional dependence
                    (test ~ pvalue) for linear|single|double threshold models
 sercorr          - matrix, test results on serial corr. (order 1)
@@ -117,7 +116,7 @@ CHANGELOG:
 - Changed API: Replace function SETUP_THRESH() to estimate_tpm().
 - Changed API: Replace function lrplot() by plot_tmp().
 - Replace "stop" by errorif() function.
-- Internal refactoring and reformating (about 5% gain of speed).
+- Internal refactoring and re-formating (about 5% gain of speed).
 - Update help file.
 
 1.1 (June 2018)
@@ -137,13 +136,13 @@ CHANGELOG:
 - Add "sse[qi]= $huge"
 
 0.921 (August 2015)
-- cleanining up the code
+- cleaning up the code
 - get rid of the seqa() function
 0.92 (August 2015)
-- cleanining up the code
+- cleaning up the code
 - solve some bugs which let to collinearity issues
 - speeding-up by vectorizing stuff and using internal functions
-- bug in the resamling procedure to bootstrap the test statistics
+- fix bug in the resampling procedure to bootstrap the test statistics
 
 TODO:
 	- Allow for more than a single regime-dependent variable

@@ -349,7 +349,7 @@ function bundle default_tpm_values (void)
    scalar D.nthresholds = 1
    scalar D.with_timeeffects = TRUE
    scalar D.nquantiles = 200   # Hansen (1999) qn=400
-   scalar D.nboot = 49 #199
+   scalar D.nboot = 299
    # Hansen (1999) trim_1=0.01, trim_2=0.01, trim_3=0.05
    matrix D.trimming_values = vec({0.01, 0.01, 0.05})
   # 0<alpha<1: Choose a rather high value if you want to estimate the refinement coefficient values
