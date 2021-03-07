@@ -10,7 +10,8 @@
 This package is an implementation of Bruce E. Hansen's panel-threshold model.
 
 Reference:
-&quot;Threshold effects in non-dynamic panels: Estimation, testing, and inference&quot;, published in Journal of Econometrics 93 (1999) 345-368.
+&quot;Threshold effects in non-dynamic panels: Estimation, testing, and inference&quot;,
+published in Journal of Econometrics 93 (1999) 345-368.
 URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 
 
@@ -18,7 +19,7 @@ URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 Public functions
 =================
 
-estimate_tpm(endo, exo, rexo, thresh, opts[null])
+estimateTpm(endo, exo, rexo, thresh, opts[null])
 -------------------------------------------------
 Parameters:
 endo         - series, endogenous series
@@ -31,10 +32,10 @@ opts         - bundle, Configure estimation parameters (optional)
 Returns: Bundle comprising various information.
 
 
-plot_tpm(model, path[null])
+plotTpm(model, path[null])
 ---------------------------
 Parameters:
-model        - bundle, returned bundle from estimate_tpm() function
+model        - bundle, returned bundle from estimateTpm() function
 path         - string, Directory where to store plots (optional). If not
                specified, plots appear immediately on screen. If specified,
                the figure(s) will be named &quot;ThresholdPanel_CI_No=X.png&quot;
@@ -60,15 +61,17 @@ The following default parameters are set:
 
 The &quot;opts&quot; parameter bundle
 ============================
-The user can pass various parameters to estimate_tmp() to over-write the default values listed above.
+The user can pass various parameters to estimateTpm() to over-write the
+default values listed above.
 To do so, you simple pass a bundle where the key must match the name of
 the parameter you want to replace by a specific value. See the sample script
 for an illustration.
 
 
-Items of the bundle returned after estimation by estimate_tpm()
+Items of the bundle returned after estimation by estimateTpm()
 ===============================================================
-Apart from all parameters set (See section entitled &quot;Default model and estimation values&quot;), many further information are returned:
+Apart from all parameters set (See section entitled &quot;Default model and
+estimation values&quot;), many further information are returned:
 
 N                - Number of cross-section units
 T                - Number of  of valid (actually used) observations
@@ -122,8 +125,10 @@ CHANGELOG:
 ----------
 
 2.0 (March 2021)
-- Changed API: Replace function SETUP_THRESH() to estimate_tpm().
-- Changed API: Replace function lrplot() by plot_tmp().
+- Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
+  arguments.
+- Changed API: Rename function lrplot() by plotTpm() and change
+  arguments.
 - Replace &quot;stop&quot; by errorif() function.
 - Internal refactoring and re-formating (about 5% gain of speed).
 - Update help file.
@@ -161,7 +166,7 @@ TODO:
 ThresholdPanel_data_joe99.gdt </data-files>
 <depends count="1">
 wooldridge_test_serial </depends>
-<gretl-function name="estimate_tpm" type="bundle">
+<gretl-function name="estimateTpm" type="bundle">
  <params count="5">
   <param name="endo" type="series" const="true"/>
   <param name="exo" type="list" const="true"/>
@@ -389,10 +394,10 @@ self.R2 = R2
 return self
 </code>
 </gretl-function>
-<gretl-function name="plot_tpm" type="void">
+<gretl-function name="plotTpm" type="void">
  <params count="2">
   <param name="self" type="bundle" const="true">
-<description>Return by estimate_tpm()</description>
+<description>Return by estimateTpm()</description>
   </param>
   <param name="path" type="string" optional="true" const="true">
 <description>Directory for storing plots</description>
@@ -918,7 +923,7 @@ clear
 include Threshold_Panel.gfn
 open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 
-# Define a panel data set + provide meaningful series names
+# Define a panel dataset + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
 rename v1 inva
 rename v2 vala
@@ -927,7 +932,7 @@ rename v4 debta
 
 # Shrink dataset for illustration purpose only
 # Note: Using the complete sample takes a very long time
-smpl 1:01 25:15
+smpl 1:01 8:15
 
 # Set up the series of interest
 series vala2 = vala^2
@@ -943,26 +948,26 @@ list Lall = inva exo1 rexo1 thresh
 smpl Lall --balanced --no-missing
 
 
-# Run the procedure with default values
+# Run the procedure with values to minimize computation time
+bundle opts = _(nthresholds = 1,\
+                nboot = 99,
+                nquantiles = 100)
 set stopwatch
-bundle Model = estimate_tpm(inva, exo1, rexo1, thresh)
+bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
 printf &quot;\n This took %.2f seconds\n&quot;, $stopwatch
 
-print Model         # print bundle output
+print Model1         # print bundle output
 
 /* Plot the Likelihood Ratio test confidence interval jointly with the
 'no-rejection region' using the LR-statistic for tests on gamma. */
-plot_tpm(Model)
+plotTpm(Model1)
 
 
 /* Activate optionally
-# Run the procedure with you own values
-bundle opts = _(nthresholds = 2,\
-                nboot = 199,\
-                confidence_level = 0.8)
-bundle Model2 = estimate_tpm(inva, exo1, rexo1, thresh, opts)
-
-plot_tpm(Model2)
+# Run the procedure with default values
+bundle Model2 = estimateTpm(inva, exo1, rexo1, thresh)
+print Model2
+plotTpm(Model2)
 */
 </sample-script>
 </gretl-function-package>

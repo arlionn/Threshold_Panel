@@ -42,19 +42,19 @@ bundle opts = _(nthresholds = 1,\
                 nboot = 99,
                 nquantiles = 100)
 set stopwatch
-bundle Model1 = estimate_tpm(inva, exo1, rexo1, thresh, opts)
+bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
 printf "\n This took %.2f seconds\n", $stopwatch
 
 print Model1         # print bundle output
 
 /* Plot the Likelihood Ratio test confidence interval jointly with the
 'no-rejection region' using the LR-statistic for tests on gamma. */
-plot_tpm(Model1)
+plotTpm(Model1)
 
 
 /* Activate optionally
 # Run the procedure with default values
-bundle Model2 = estimate_tpm(inva, exo1, rexo1, thresh)
+bundle Model2 = estimateTpm(inva, exo1, rexo1, thresh)
 print Model2
-plot_tpm(Model2)
+plotTpm(Model2)
 */
