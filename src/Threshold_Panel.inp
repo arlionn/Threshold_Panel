@@ -801,13 +801,11 @@ function bundle estimate_tpm (const series endo,
 end function
 
 
-function void lrplot (matrix lrstats "LR test stats. for threshold.",
-                      const matrix qq "Threshold values evaluated",
-                      string fname "Path + file name for storing graphs")
-    /* */
-
-    # Asymptotic distribution of threshold estimate
-    # "No-rejection region' of confidence level 1-alpha
+function void plot_thresholds (matrix lrstats "LR test stats. for threshold.",
+                              const matrix qq "Threshold values evaluated",
+                              string fname "Path + file name for storing graphs")
+    /* Plot thresholds estimation results plus confidence intervals.
+      Asymptotic distribution of threshold estimate. */
 
     # 10%, 5 and 1% critical value for H0: gamma=gamma_0
     matrix cc = {6.53, 7.35, 10.59}
@@ -847,10 +845,10 @@ function void lrplot (matrix lrstats "LR test stats. for threshold.",
             literal set grid back ls 12
             # Line Styles
             literal set for [i=1:5] linetype i dashtype i
-            literal set linetype 1 lc rgb "black" lw 2.0	# --- blue
-            literal set linetype 2 lc rgb "black" lw 2.0 	# --- red
-            literal set linetype 3 lc rgb "black" lw 2.0 	# --- black
-            literal set linetype 4 lc rgb "black" lw 2.0	# --- green
+            literal set linetype 1 lc rgb "black" lw 2.0
+            literal set linetype 2 lc rgb "black" lw 2.0
+            literal set linetype 3 lc rgb "black" lw 2.0
+            literal set linetype 4 lc rgb "black" lw 2.0
         end plot --output="@fout"
 
     endloop
