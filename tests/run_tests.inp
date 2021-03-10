@@ -1,0 +1,45 @@
+set verbose off
+clear
+set assert stop
+
+include "./src/Threshold_Panel.inp" --force
+include assertion.gfn
+
+
+bundles Params = null
+Params = Params + _(r = {0.1}, thresh = {0.09, 0.2, 1,2}',\
+                    rexo = {0.09, 0.2, 1,2}',
+                    expected = {0.09, 0; 0, 0.2; 0, 1; 0, 2}\
+                    )
+Params = Params + _(r = {0.1, 0.6}, thresh = {0.09, 0.2, 1,2}',\
+                    rexo = {0.09, 0.2, 1,2}',
+                    expected = {0.09, 0, 0; 0, 0.2, 0; 0, 0, 1; 0, 0, 2}\
+                    )
+Params = Params + _(r = {0.1, 0.6}, thresh = {0.09, 0.2, 1,2}',\
+                    rexo = {0.09, 0.2, 1.2, 2.2}' ~ {-0.4, 1.1, 0.59, 2.2}',\
+                    expected = {0.09, 0, 0, 0, -0.4, 0, 0, 0, 0, 1.1, 0, 0,\
+                                0, 0, 0.59, 2.2, 0, 0, 0, 0, 0, 0, 0, 0}\
+                    )
+
+function void test_get_interaction_terms (const bundles P)
+    print "Start testing get_interaction_terms()."
+
+    loop foreach i P
+        # Given
+        expected = vec(P[i].expected)
+
+        # When
+        matrix actual = get_interaction_terms(P[i].r, P[i].thresh, P[i].rexo)
+        actual = vec(actual)
+
+        # Then
+        assert(rows(actual) == rows(expected))
+        loop j=1..rows(actual)
+            assert_almost_equal_num(actual[j], expected[j], 1e-3)
+        endloop
+    endloop
+end function
+test_get_interaction_terms(Params)
+
+
+printf "\nInfo: All tests passed.\n"

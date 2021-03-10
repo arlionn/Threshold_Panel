@@ -9,8 +9,12 @@ clear
  dataset do not fully coincide!
 */
 
-include Threshold_Panel.gfn
+#include Threshold_Panel.gfn
+include "/home/at/git/Threshold_Panel/src/Threshold_Panel.gfn"
 open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
+
+REPLICATE_HANSEN90 = 1  # =1: replicate Hansen's paper, =0: small sample
+
 
 # Define a panel dataset + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
@@ -18,10 +22,6 @@ rename v1 inva
 rename v2 vala
 rename v3 cfa
 rename v4 debta
-
-# Shrink dataset for illustration purpose only
-# Note: Using the complete sample takes a very long time
-smpl 1:01 8:15
 
 # Set up the series of interest
 series vala2 = vala^2
@@ -33,28 +33,47 @@ list rexo = cfa
 list rexo1 = lags(1,rexo)
 series thresh = debta(-1)
 list Lall = inva exo1 rexo1 thresh
-# Make sure you have a balanced dataset
-smpl Lall --balanced --no-missing
 
 
-# Run the procedure with values to minimize computation time
-bundle opts = _(nthresholds = 1,\
-                nboot = 99,
-                nquantiles = 100)
-set stopwatch
-bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
-printf "\n This took %.2f seconds\n", $stopwatch
+if REPLICATE_HANSEN90 == 0
+    # Shrink dataset for illustration purpose only
+    # Note: Using the complete sample takes a very long time
+    smpl 1:01 8:15
+    
+    # Make sure you have a balanced dataset
+    smpl Lall --balanced --no-missing
 
-print Model1         # print bundle output
+    # Run the procedure with values to minimize computation time
+    bundle opts = _(nthresholds = 1,\
+                    nboot = 99,
+                    nquantiles = 100)
+    set stopwatch
+    bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
+    printf "\n This took %.2f seconds\n", $stopwatch
 
-/* Plot the Likelihood Ratio test confidence interval jointly with the
-'no-rejection region' using the LR-statistic for tests on gamma. */
-plotTpm(Model1)
+    print Model1         # print bundle output
+
+    /* Plot the Likelihood Ratio test confidence interval jointly with the
+    'no-rejection region' using the LR-statistic for tests on gamma. */
+    plotTpm(Model1)
+endif
 
 
-/* Activate optionally
-# Run the procedure with default values
-bundle Model2 = estimateTpm(inva, exo1, rexo1, thresh)
-print Model2
-plotTpm(Model2)
-*/
+if REPLICATE_HANSEN90 != 0
+    print "Start replicating Hansen's 1999 results. Takes a while..."
+    
+    # Make sure you have a balanced dataset
+    smpl Lall --balanced --no-missing
+
+    bundle opts = _(\
+                    nthresholds = 2,\
+                    nboot = 300,\
+                    nquantiles = 400,\
+                    confidence_level = 0.95,\
+                    trimming_values = vec({0.01, 0.01, 0.05}),\
+                    with_timeeffects = 0\
+                    )
+    bundle Hansen = estimateTpm(inva, exo1, rexo1, thresh, opts)
+    print Hansen
+    plotTpm(Hansen)
+endif
