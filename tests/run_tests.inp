@@ -17,14 +17,15 @@ Params = Params + _(r = {0.1, 0.6}, thresh = {0.09, 0.2, 1,2}',\
                     )
 Params = Params + _(r = {0.1, 0.6}, thresh = {0.09, 0.2, 1,2}',\
                     rexo = {0.09, 0.2, 1.2, 2.2}' ~ {-0.4, 1.1, 0.59, 2.2}',\
-                    expected = {0.09, 0, 0, 0, -0.4, 0, 0, 0, 0, 1.1, 0, 0,\
-                                0, 0, 0.59, 2.2, 0, 0, 0, 0, 0, 0, 0, 0}\
+                    expected = {0.09, 0, 0, 0, -0.4, 0, 0, 0, 0, 0.2, 0, 0,\
+                                0, 1.1, 0, 0, 0, 0, 1.2, 2.2, 0, 0, 0.59, 2.2}\
                     )
 
 function void test_get_interaction_terms (const bundles P)
     print "Start testing get_interaction_terms()."
 
     loop foreach i P
+        print i
         # Given
         expected = vec(P[i].expected)
 

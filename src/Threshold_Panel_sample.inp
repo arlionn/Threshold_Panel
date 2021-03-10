@@ -10,8 +10,10 @@ clear
 */
 
 #include Threshold_Panel.gfn
-include "/home/at/git/Threshold_Panel/src/Threshold_Panel.gfn"
-open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
+#open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
+include wooldridge_test_serial.gfn
+include "/home/at/git/Threshold_Panel/src/Threshold_Panel.inp" --force
+open "/home/at/git/Threshold_Panel/src/ThresholdPanel_data_joe99.gdt" --quiet
 
 REPLICATE_HANSEN90 = 1  # =1: replicate Hansen's paper, =0: small sample
 
@@ -39,14 +41,14 @@ if REPLICATE_HANSEN90 == 0
     # Shrink dataset for illustration purpose only
     # Note: Using the complete sample takes a very long time
     smpl 1:01 8:15
-    
+
     # Make sure you have a balanced dataset
     smpl Lall --balanced --no-missing
 
     # Run the procedure with values to minimize computation time
     bundle opts = _(nthresholds = 1,\
-                    nboot = 99,
-                    nquantiles = 100)
+                    nboot = 199,
+                    nquantiles = 200)
     set stopwatch
     bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
     printf "\n This took %.2f seconds\n", $stopwatch
@@ -61,10 +63,11 @@ endif
 
 if REPLICATE_HANSEN90 != 0
     print "Start replicating Hansen's 1999 results. Takes a while..."
-    
+
     # Make sure you have a balanced dataset
     smpl Lall --balanced --no-missing
 
+    set stopwatch
     bundle opts = _(\
                     nthresholds = 2,\
                     nboot = 300,\
@@ -74,6 +77,7 @@ if REPLICATE_HANSEN90 != 0
                     with_timeeffects = 0\
                     )
     bundle Hansen = estimateTpm(inva, exo1, rexo1, thresh, opts)
+    printf "\n This took %.2f seconds\n", $stopwatch
     print Hansen
     plotTpm(Hansen)
 endif
