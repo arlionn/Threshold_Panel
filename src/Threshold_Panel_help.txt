@@ -121,6 +121,10 @@ CHANGELOG:
 - Changed API: Rename function lrplot() by plotTpm() and change
   arguments.
 - Replace "stop" by errorif() function.
+- Fix bug in get_interaction_terms() function for constructing
+  interaction terms.
+- Make use of hdprod() function for computing interaction terms;
+  results in about +20% gain of speed.
 - Internal refactoring and re-formating (about 5% gain of speed).
 - Update help file.
 - Minimum required version is 2020b now.

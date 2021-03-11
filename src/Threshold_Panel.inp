@@ -80,27 +80,18 @@ function matrix get_interaction_terms (matrix r,
     matrix r = vec(r)
     r = msortby(r, 1)
     nr = rows(r)
-    T = rows(thresh)
-    matrix D = zeros(T, (nr + 1))
-    ncols = cols(rexo) * (nr + 1)
-    matrix INT = zeros(T, ncols)
+    matrix D = zeros(rows(thresh), (nr + 1))
 
+    # construct selection matrix
+    D[,1] = (thresh .<= r[1])
     if nr == 1
-        D[,1] = (thresh .<= r[1])
-        D[,2] = (thresh .> r[1])
+        D[,2] = !D[,1]
     elif rows(r) == 2
-        D[,1] = (thresh .<= r[1])
         D[,2] = (thresh .> r[1] && thresh .< r[2])
-        D[,3] = (thresh .> r[2])
+        D[,3] = !D[,1] && !D[,2]
     endif
 
-    loop j=1..cols(rexo) -q
-        loop k=1..cols(D) -q
-            INT[,(k + j - 1)] = D[,k] .* rexo[,j]
-        endloop
-    endloop
-
-    return INT
+    return hdprod(D, rexo)
 end function
 
 
@@ -605,7 +596,7 @@ function bundle estimateTpm (const series endo,
     cc = -2 * ln((1 - sqrt(self.confidence_level)))
 
     # ESTIMATE BASELINE LINEAR estimate_and_bootstrap
-    string strTF = (self.with_timeeffects == FALSE) ? "--time-dummies" : ""
+    string strTF = (self.with_timeeffects == TRUE) ? "--time-dummies" : ""
     # FE OLS S.E.
     panel endo const exo rexo --fixed-effects @strTF --quiet
     self.sehomo_lin = $stderr
