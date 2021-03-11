@@ -3,7 +3,7 @@
 <gretl-function-package name="Threshold_Panel" needs-panel-data="true" minver="2020b" lives-in-subdir="true">
 <author email="atecon@posteo.de">Artur Tarassow</author>
 <version>2.0</version>
-<date>2021-03-07</date>
+<date>2021-03-11</date>
 <description>Panel threshold model of Hansen (JoE, 1999)</description>
 <tags>C23</tags>
 <help>
@@ -130,8 +130,13 @@ CHANGELOG:
 - Changed API: Rename function lrplot() by plotTpm() and change
   arguments.
 - Replace &quot;stop&quot; by errorif() function.
-- Internal refactoring and re-formating (about 5% gain of speed).
+- Fix bug in get_interaction_terms() function for constructing
+  interaction terms.
+- Make use of hdprod() function for computing interaction terms;
+  results in about +20% gain of speed.
+- Internal refactoring and re-formatting (about 5% gain of speed).
 - Update help file.
+- Improve print-out of tests (formatting)
 - Minimum required version is 2020b now.
 
 1.1 (June 2018)
@@ -241,7 +246,7 @@ qq1 = dd[floor(sq * rows(dd))]    # vector of quintile values
 qn1 = rows(qq1)                   # number of quintiles
 cc = -2 * ln((1 - sqrt(self.confidence_level)))
 # ESTIMATE BASELINE LINEAR estimate_and_bootstrap
-string strTF = (self.with_timeeffects == FALSE) ? &quot;--time-dummies&quot; : &quot;&quot;
+string strTF = (self.with_timeeffects == TRUE) ? &quot;--time-dummies&quot; : &quot;&quot;
 # FE OLS S.E.
 panel endo const exo rexo --fixed-effects @strTF --quiet
 self.sehomo_lin = $stderr
@@ -531,24 +536,16 @@ return selifr(q, C)
 matrix r = vec(r)
 r = msortby(r, 1)
 nr = rows(r)
-T = rows(thresh)
-matrix D = zeros(T, (nr + 1))
-ncols = cols(rexo) * (nr + 1)
-matrix INT = zeros(T, ncols)
+matrix D = zeros(rows(thresh), (nr + 1))
+# construct selection matrix
+D[,1] = (thresh .&lt;= r[1])
 if nr == 1
-  D[,1] = (thresh .&lt;= r[1])
-  D[,2] = (thresh .&gt; r[1])
+  D[,2] = !D[,1]
 elif rows(r) == 2
-  D[,1] = (thresh .&lt;= r[1])
   D[,2] = (thresh .&gt; r[1] &amp;&amp; thresh .&lt; r[2])
-  D[,3] = (thresh .&gt; r[2])
+  D[,3] = !D[,1] &amp;&amp; !D[,2]
 endif
-loop j=1..cols(rexo) -q
-  loop k=1..cols(D) -q
-    INT[,(k + j - 1)] = D[,k] .* rexo[,j]
-  endloop
-endloop
-return INT
+return hdprod(D, rexo)
 </code>
 </gretl-function>
 <gretl-function name="estimate_and_bootstrap" type="bundle" private="1">
@@ -750,9 +747,9 @@ rname += strEXO
 rname += strREXO
 rownames(mtmp, rname)
 printf &quot;%12.4f\n&quot;, mtmp
-printf &quot;* Sum of Squared Errors: %11.4f\n&quot;, sse
-printf &quot;* Within R^2: %11.4f\n&quot;, R2
-printf &quot;* Durbin-Watson: %12.4f\n&quot;, DW
+printf &quot;* Sum of Squared Errors: \t%.4f\n&quot;, sse
+printf &quot;* Within R^2: \t\t\t%.4f\n&quot;, R2
+printf &quot;* Durbin-Watson: \t\t%.4f\n&quot;, DW
 printf &quot;* Test on no serial correlation of order 1:\n&quot;
 printf &quot;  Teststat = %3.4f \t Prob. = %3.4f\n&quot;, sercorr[1], sercorr[2]
 printf &quot;* Test on homoskedasticity:\n&quot;
@@ -893,9 +890,9 @@ rownames(mtmp,rname)
 printf &quot;%12.4f\n&quot;, mtmp
 if lreg==2 &amp;&amp; iterat==1
 else
-  printf &quot;* Sum of Squared Errors: %11.4f\n&quot;, sse
-  printf &quot;* Within R^2: %18.4f\n&quot;, R2
-  printf &quot;* Durbin-Watson: %12.4f\n&quot;, DW
+  printf &quot;* Sum of Squared Errors: \t%.4f\n&quot;, sse
+  printf &quot;* Within R^2: \t\t\t%.4f\n&quot;, R2
+  printf &quot;* Durbin-Watson: \t\t%.4f\n&quot;, DW
   printf &quot;* Test on no serial correlation of order 1:\n&quot;
   printf &quot;  Teststat = %3.4f \t Prob. = %3.4f\n&quot;, sercorr[1],sercorr[2]
   printf &quot;* Test on homoskedasticity:\n&quot;
@@ -914,7 +911,7 @@ clear
 
 /* Replication of Hansen's results in Journal of Econometrics (1999)
 
- NOTE: For some reasons Hansen doesn't exploit the whole dataset comprising
+ NOTE: Hansen doesn't exploit the whole dataset comprising
  14 time observations (one lost due to lags) but actually only 13 if one
  looks at his code. Hence, our results based on the full unrestricted
  dataset do not fully coincide!
@@ -923,16 +920,15 @@ clear
 include Threshold_Panel.gfn
 open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 
+REPLICATE_HANSEN90 = 0  # =1: replicate Hansen's paper, =0: small sample
+
+
 # Define a panel dataset + provide meaningful series names
 setobs 15 1:1 --stacked-time-series
 rename v1 inva
 rename v2 vala
 rename v3 cfa
 rename v4 debta
-
-# Shrink dataset for illustration purpose only
-# Note: Using the complete sample takes a very long time
-smpl 1:01 8:15
 
 # Set up the series of interest
 series vala2 = vala^2
@@ -944,31 +940,53 @@ list rexo = cfa
 list rexo1 = lags(1,rexo)
 series thresh = debta(-1)
 list Lall = inva exo1 rexo1 thresh
-# Make sure you have a balanced dataset
-smpl Lall --balanced --no-missing
 
 
-# Run the procedure with values to minimize computation time
-bundle opts = _(nthresholds = 1,\
-                nboot = 99,
-                nquantiles = 100)
-set stopwatch
-bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
-printf &quot;\n This took %.2f seconds\n&quot;, $stopwatch
+if REPLICATE_HANSEN90 == 0
+    # Shrink dataset for illustration purpose only
+    smpl 1:01 8:15
 
-print Model1         # print bundle output
+    # Make sure you have a balanced dataset
+    smpl Lall --balanced --no-missing
 
-/* Plot the Likelihood Ratio test confidence interval jointly with the
-'no-rejection region' using the LR-statistic for tests on gamma. */
-plotTpm(Model1)
+    # Run the procedure with values to minimize computation time
+    bundle opts = _(nthresholds = 1,\
+                    nboot = 99,
+                    nquantiles = 99)
+    set stopwatch
+    bundle Model = estimateTpm(inva, exo1, rexo1, thresh, opts)
+    printf &quot;\n This took %.2f seconds\n&quot;, $stopwatch
+
+    print Model         # print bundle output
+
+    /* Plot the Likelihood Ratio test confidence interval jointly with the
+    'no-rejection region' using the LR-statistic for tests on gamma. */
+    plotTpm(Model)
+endif
 
 
-/* Activate optionally
-# Run the procedure with default values
-bundle Model2 = estimateTpm(inva, exo1, rexo1, thresh)
-print Model2
-plotTpm(Model2)
-*/
+if REPLICATE_HANSEN90 != 0
+    print &quot;Start replicating Hansen's 1999 results. Better get a coffee...&quot;
+
+    # Make sure you have a balanced dataset
+    smpl Lall --balanced --no-missing
+
+    bundle opts = _(\
+                    nthresholds = 2,\
+                    nboot = 300,\
+                    nquantiles = 400,\
+                    confidence_level = 0.95,\
+                    trimming_values = vec({0.01, 0.01, 0.05}),\
+                    with_timeeffects = 0\
+                    )
+
+    set stopwatch
+    bundle Hansen = estimateTpm(inva, exo1, rexo1, thresh, opts)
+    printf &quot;\n This took %.2f seconds\n&quot;, $stopwatch
+    print Hansen
+
+    plotTpm(Hansen)
+endif
 </sample-script>
 </gretl-function-package>
 </gretl-functions>

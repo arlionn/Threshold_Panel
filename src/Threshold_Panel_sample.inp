@@ -3,19 +3,16 @@ clear
 
 /* Replication of Hansen's results in Journal of Econometrics (1999)
 
- NOTE: For some reasons Hansen doesn't exploit the whole dataset comprising
+ NOTE: Hansen doesn't exploit the whole dataset comprising
  14 time observations (one lost due to lags) but actually only 13 if one
  looks at his code. Hence, our results based on the full unrestricted
  dataset do not fully coincide!
 */
 
-#include Threshold_Panel.gfn
-#open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
-include wooldridge_test_serial.gfn
-include "/home/at/git/Threshold_Panel/src/Threshold_Panel.inp" --force
-open "/home/at/git/Threshold_Panel/src/ThresholdPanel_data_joe99.gdt" --quiet
+include Threshold_Panel.gfn
+open ThresholdPanel_data_joe99.gdt --frompkg=Threshold_Panel
 
-REPLICATE_HANSEN90 = 1  # =1: replicate Hansen's paper, =0: small sample
+REPLICATE_HANSEN90 = 0  # =1: replicate Hansen's paper, =0: small sample
 
 
 # Define a panel dataset + provide meaningful series names
@@ -39,7 +36,6 @@ list Lall = inva exo1 rexo1 thresh
 
 if REPLICATE_HANSEN90 == 0
     # Shrink dataset for illustration purpose only
-    # Note: Using the complete sample takes a very long time
     smpl 1:01 8:15
 
     # Make sure you have a balanced dataset
@@ -47,27 +43,26 @@ if REPLICATE_HANSEN90 == 0
 
     # Run the procedure with values to minimize computation time
     bundle opts = _(nthresholds = 1,\
-                    nboot = 199,
-                    nquantiles = 200)
+                    nboot = 99,
+                    nquantiles = 99)
     set stopwatch
-    bundle Model1 = estimateTpm(inva, exo1, rexo1, thresh, opts)
+    bundle Model = estimateTpm(inva, exo1, rexo1, thresh, opts)
     printf "\n This took %.2f seconds\n", $stopwatch
 
-    print Model1         # print bundle output
+    print Model         # print bundle output
 
     /* Plot the Likelihood Ratio test confidence interval jointly with the
     'no-rejection region' using the LR-statistic for tests on gamma. */
-    plotTpm(Model1)
+    plotTpm(Model)
 endif
 
 
 if REPLICATE_HANSEN90 != 0
-    print "Start replicating Hansen's 1999 results. Takes a while..."
+    print "Start replicating Hansen's 1999 results. Better get a coffee..."
 
     # Make sure you have a balanced dataset
     smpl Lall --balanced --no-missing
 
-    set stopwatch
     bundle opts = _(\
                     nthresholds = 2,\
                     nboot = 300,\
@@ -76,8 +71,11 @@ if REPLICATE_HANSEN90 != 0
                     trimming_values = vec({0.01, 0.01, 0.05}),\
                     with_timeeffects = 0\
                     )
+
+    set stopwatch
     bundle Hansen = estimateTpm(inva, exo1, rexo1, thresh, opts)
     printf "\n This took %.2f seconds\n", $stopwatch
     print Hansen
+
     plotTpm(Hansen)
 endif

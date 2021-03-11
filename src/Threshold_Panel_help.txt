@@ -125,8 +125,9 @@ CHANGELOG:
   interaction terms.
 - Make use of hdprod() function for computing interaction terms;
   results in about +20% gain of speed.
-- Internal refactoring and re-formating (about 5% gain of speed).
+- Internal refactoring and re-formatting (about 5% gain of speed).
 - Update help file.
+- Improve print-out of tests (formatting)
 - Minimum required version is 2020b now.
 
 1.1 (June 2018)

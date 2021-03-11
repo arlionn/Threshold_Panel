@@ -318,9 +318,9 @@ function void print_linear_model_estimates (const matrix beta_lin,
     rownames(mtmp, rname)
 
     printf "%12.4f\n", mtmp
-    printf "* Sum of Squared Errors: %11.4f\n", sse
-    printf "* Within R^2: %11.4f\n", R2
-    printf "* Durbin-Watson: %12.4f\n", DW
+    printf "* Sum of Squared Errors: \t%.4f\n", sse
+    printf "* Within R^2: \t\t\t%.4f\n", R2
+    printf "* Durbin-Watson: \t\t%.4f\n", DW
     printf "* Test on no serial correlation of order 1:\n"
     printf "  Teststat = %3.4f \t Prob. = %3.4f\n", sercorr[1], sercorr[2]
     printf "* Test on homoskedasticity:\n"
@@ -485,9 +485,9 @@ function void print_model_estimates (const matrix beta_indep,
 
     if lreg==2 && iterat==1
     else
-        printf "* Sum of Squared Errors: %11.4f\n", sse
-        printf "* Within R^2: %18.4f\n", R2
-        printf "* Durbin-Watson: %12.4f\n", DW
+        printf "* Sum of Squared Errors: \t%.4f\n", sse
+        printf "* Within R^2: \t\t\t%.4f\n", R2
+        printf "* Durbin-Watson: \t\t%.4f\n", DW
         printf "* Test on no serial correlation of order 1:\n"
         printf "  Teststat = %3.4f \t Prob. = %3.4f\n", sercorr[1],sercorr[2]
         printf "* Test on homoskedasticity:\n"
