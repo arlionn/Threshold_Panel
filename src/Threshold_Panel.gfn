@@ -2,16 +2,15 @@
 <gretl-functions>
 <gretl-function-package name="Threshold_Panel" needs-panel-data="true" minver="2020b" lives-in-subdir="true">
 <author email="atecon@posteo.de">Artur Tarassow</author>
-<version>2.0</version>
-<date>2021-03-11</date>
+<version>2.1</version>
+<date>2021-1-16</date>
 <description>Panel threshold model of Hansen (JoE, 1999)</description>
 <tags>C23</tags>
 <help>
 This package is an implementation of Bruce E. Hansen's panel-threshold model.
 
 Reference:
-&quot;Threshold effects in non-dynamic panels: Estimation, testing, and inference&quot;,
-published in Journal of Econometrics 93 (1999) 345-368.
+&quot;Threshold effects in non-dynamic panels: Estimation, testing, and inference&quot;, published in Journal of Econometrics 93 (1999) 345-368.
 URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 
 
@@ -21,6 +20,8 @@ Public functions
 
 estimateTpm(endo, exo, rexo, thresh, opts[null])
 -------------------------------------------------
+Estimate the model.
+
 Parameters:
 endo         - series, endogenous series
 exo          - list, regime-independent regressors
@@ -34,6 +35,8 @@ Returns: Bundle comprising various information.
 
 plotTpm(model, path[null])
 ---------------------------
+Plot the evaluated thresholds.
+
 Parameters:
 model        - bundle, returned bundle from estimateTpm() function
 path         - string, Directory where to store plots (optional). If not
@@ -124,6 +127,9 @@ hettest          - matrix, test results of no heteroskedasticity
 CHANGELOG:
 ----------
 
+2.1 (November 2021)
+- Replace both deprecated functions colnames() and rownames()
+
 2.0 (March 2021)
 - Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
   arguments.
@@ -163,9 +169,6 @@ CHANGELOG:
 - solve some bugs which let to collinearity issues
 - speeding-up by vectorizing stuff and using internal functions
 - fix bug in the resampling procedure to bootstrap the test statistics
-
-TODO:
-	- Allow for more than a single regime-dependent variable
 </help>
 <data-files count="1">
 ThresholdPanel_data_joe99.gdt </data-files>
@@ -371,24 +374,24 @@ elif self.nthresholds == 3
   strings row_labels_2 = defarray(&quot;Single Threshold&quot;, &quot;Dual Threshold&quot;, &quot;Quad. Threshold&quot;)
 endif
 strings column_labels = defarray(&quot;Test stat.&quot;, &quot;Prob.&quot;)
-rownames(DW, row_labels)
-colnames(DW, &quot;DW&quot;)
+rnameset(DW, row_labels)
+cnameset(DW, &quot;DW&quot;)
 self.DW = DW
-rownames(hettest, row_labels)
-colnames(hettest, column_labels)
+rnameset(hettest, row_labels)
+cnameset(hettest, column_labels)
 self.hettest = hettest
-rownames(csdeptest, row_labels)
-colnames(csdeptest, column_labels)
+rnameset(csdeptest, row_labels)
+cnameset(csdeptest, column_labels)
 self.csdeptest = csdeptest
-rownames(sercorr, row_labels)
-colnames(sercorr, column_labels)
+rnameset(sercorr, row_labels)
+cnameset(sercorr, column_labels)
 self.sercorr = sercorr
-rownames(lrtest, row_labels_2)
-rownames(lrprob, row_labels_2)
-rownames(lrcrit, row_labels_2)
-colnames(lrcrit, &quot;90pct. 95pct. 99pct.&quot;)
-rownames(SSE, row_labels)
-rownames(SSE, row_labels)
+rnameset(lrtest, row_labels_2)
+rnameset(lrprob, row_labels_2)
+rnameset(lrcrit, row_labels_2)
+cnameset(lrcrit, &quot;90pct. 95pct. 99pct.&quot;)
+rnameset(SSE, row_labels)
+rnameset(SSE, row_labels)
 self.lrstats = lrstats
 self.lrtest = lrtest
 self.lrprob = lrprob
@@ -417,7 +420,7 @@ matrix cc = {6.53, 7.35, 10.59}
 loop nplot=1..cols(lrstats) -q
   matrix mtmp = ones(nrows_qq, cols(cc)) .* cc
   matrix mplot = lrstats[,nplot] ~ mtmp ~ self.qq
-  colnames(mplot, &quot;LR-Ratio 90pct. 95pct. 99pct. self.qq&quot;)
+  cnameset(mplot, &quot;LR-Ratio 90pct. 95pct. 99pct. self.qq&quot;)
   if exists(fname)
     string filename = sprintf(&quot;%s/ThresholdPanel_CI_No=%d.png&quot;, path, $nplot)
   else
@@ -741,11 +744,11 @@ endif
 printf &quot;***********************************\n&quot;
 printf &quot;\nCoefficient Estimates\n&quot;
 matrix mtmp = beta_lin ~ (beta_lin./sehet_lin) ~ sehomo_lin ~ sehet_lin
-colnames(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
+cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
 strings rname = defarray(&quot;Const&quot;)
 rname += strEXO
 rname += strREXO
-rownames(mtmp, rname)
+rnameset(mtmp, rname)
 printf &quot;%12.4f\n&quot;, mtmp
 printf &quot;* Sum of Squared Errors: \t%.4f\n&quot;, sse
 printf &quot;* Within R^2: \t\t\t%.4f\n&quot;, R2
@@ -852,7 +855,7 @@ if iterat == 1
   printf &quot;LR-test statistics = %12.3f\n&quot;, lrt
   printf &quot;Number of bootstrap replications = %d\n&quot;, self.nboot
   printf &quot;Bootstrap p-value: \t %.3f\n&quot;, lrprob
-  rownames(lrcrits, &quot;10pct 5pct 1pct&quot;)
+  rnameset(lrcrits, &quot;10pct 5pct 1pct&quot;)
   printf &quot;Critical Values: \t 10pct.=%4.3f\t5pct.=%4.3f\t1pct.=%4.3f\n&quot;, lrcrits[1], lrcrits[2], lrcrits[3]
   printf &quot;*******************************************************************************\n&quot;
 endif
@@ -862,10 +865,10 @@ loop i=1..nelem(strREXO) -q
 endloop
 printf &quot;\n\nRegime-independent Coefficients\n&quot;
 matrix mtmp = beta_indep ~ (beta_indep./sehet_indep) ~ sehomo_indep ~ sehet_indep
-colnames(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
+cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
 strings rname = defarray(&quot;Const&quot;)
 rname += strEXO
-rownames(mtmp, rname)
+rnameset(mtmp, rname)
 printf &quot;%12.4f\n&quot;, mtmp
 matrix rsorted = sort(rhats[,2])
 printf &quot;Regime-dependent Coefficients\n&quot;
@@ -885,8 +888,8 @@ elif lreg == 3      # triple threshold -- not yet implemented!
   funcerr &quot;Triple threshold model is not supported. Abort.&quot;
 endif
 matrix mtmp = beta_dep ~ (beta_dep./sehet_dep) ~ sehomo_dep ~ sehet_dep
-colnames(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
-rownames(mtmp,rname)
+cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
+rnameset(mtmp,rname)
 printf &quot;%12.4f\n&quot;, mtmp
 if lreg==2 &amp;&amp; iterat==1
 else

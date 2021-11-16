@@ -1,8 +1,7 @@
 This package is an implementation of Bruce E. Hansen's panel-threshold model.
 
 Reference:
-"Threshold effects in non-dynamic panels: Estimation, testing, and inference",
-published in Journal of Econometrics 93 (1999) 345-368.
+"Threshold effects in non-dynamic panels: Estimation, testing, and inference", published in Journal of Econometrics 93 (1999) 345-368.
 URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 
 
@@ -12,6 +11,8 @@ Public functions
 
 estimateTpm(endo, exo, rexo, thresh, opts[null])
 -------------------------------------------------
+Estimate the model.
+
 Parameters:
 endo         - series, endogenous series
 exo          - list, regime-independent regressors
@@ -25,6 +26,8 @@ Returns: Bundle comprising various information.
 
 plotTpm(model, path[null])
 ---------------------------
+Plot the evaluated thresholds.
+
 Parameters:
 model        - bundle, returned bundle from estimateTpm() function
 path         - string, Directory where to store plots (optional). If not
@@ -115,6 +118,9 @@ hettest          - matrix, test results of no heteroskedasticity
 CHANGELOG:
 ----------
 
+2.1 (November 2021)
+- Replace both deprecated functions colnames() and rownames()
+
 2.0 (March 2021)
 - Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
   arguments.
@@ -154,7 +160,3 @@ CHANGELOG:
 - solve some bugs which let to collinearity issues
 - speeding-up by vectorizing stuff and using internal functions
 - fix bug in the resampling procedure to bootstrap the test statistics
-
-TODO:
-	- Allow for more than a single regime-dependent variable
-

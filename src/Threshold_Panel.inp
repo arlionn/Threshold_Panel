@@ -310,12 +310,12 @@ function void print_linear_model_estimates (const matrix beta_lin,
 
     printf "\nCoefficient Estimates\n"
     matrix mtmp = beta_lin ~ (beta_lin./sehet_lin) ~ sehomo_lin ~ sehet_lin
-    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
+    cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
 
     strings rname = defarray("Const")
     rname += strEXO
     rname += strREXO
-    rownames(mtmp, rname)
+    rnameset(mtmp, rname)
 
     printf "%12.4f\n", mtmp
     printf "* Sum of Squared Errors: \t%.4f\n", sse
@@ -436,7 +436,7 @@ function void print_model_estimates (const matrix beta_indep,
         printf "LR-test statistics = %12.3f\n", lrt
         printf "Number of bootstrap replications = %d\n", self.nboot
         printf "Bootstrap p-value: \t %.3f\n", lrprob
-        rownames(lrcrits, "10pct 5pct 1pct")
+        rnameset(lrcrits, "10pct 5pct 1pct")
         printf "Critical Values: \t 10pct.=%4.3f\t5pct.=%4.3f\t1pct.=%4.3f\n",\
                 lrcrits[1], lrcrits[2], lrcrits[3]
         printf "*******************************************************************************\n"
@@ -451,10 +451,10 @@ function void print_model_estimates (const matrix beta_indep,
     matrix mtmp = beta_indep ~ (beta_indep./sehet_indep) ~ \
                   sehomo_indep ~ sehet_indep
 
-    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
+    cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
     strings rname = defarray("Const")
     rname += strEXO
-    rownames(mtmp, rname)
+    rnameset(mtmp, rname)
     printf "%12.4f\n", mtmp
     matrix rsorted = sort(rhats[,2])
 
@@ -479,8 +479,8 @@ function void print_model_estimates (const matrix beta_indep,
     endif
 
     matrix mtmp = beta_dep ~ (beta_dep./sehet_dep) ~ sehomo_dep ~ sehet_dep
-    colnames(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
-    rownames(mtmp,rname)
+    cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
+    rnameset(mtmp,rname)
     printf "%12.4f\n", mtmp
 
     if lreg==2 && iterat==1
@@ -770,24 +770,24 @@ function bundle estimateTpm (const series endo,
     endif
 
     strings column_labels = defarray("Test stat.", "Prob.")
-    rownames(DW, row_labels)
-    colnames(DW, "DW")
+    rnameset(DW, row_labels)
+    cnameset(DW, "DW")
     self.DW = DW
-    rownames(hettest, row_labels)
-    colnames(hettest, column_labels)
+    rnameset(hettest, row_labels)
+    cnameset(hettest, column_labels)
     self.hettest = hettest
-    rownames(csdeptest, row_labels)
-    colnames(csdeptest, column_labels)
+    rnameset(csdeptest, row_labels)
+    cnameset(csdeptest, column_labels)
     self.csdeptest = csdeptest
-    rownames(sercorr, row_labels)
-    colnames(sercorr, column_labels)
+    rnameset(sercorr, row_labels)
+    cnameset(sercorr, column_labels)
     self.sercorr = sercorr
-    rownames(lrtest, row_labels_2)
-    rownames(lrprob, row_labels_2)
-    rownames(lrcrit, row_labels_2)
-    colnames(lrcrit, "90pct. 95pct. 99pct.")
-    rownames(SSE, row_labels)
-    rownames(SSE, row_labels)
+    rnameset(lrtest, row_labels_2)
+    rnameset(lrprob, row_labels_2)
+    rnameset(lrcrit, row_labels_2)
+    cnameset(lrcrit, "90pct. 95pct. 99pct.")
+    rnameset(SSE, row_labels)
+    rnameset(SSE, row_labels)
     self.lrstats = lrstats
     self.lrtest = lrtest
     self.lrprob = lrprob
@@ -815,7 +815,7 @@ function void plotTpm (const bundle self "Return by estimateTpm()",
 
         matrix mtmp = ones(nrows_qq, cols(cc)) .* cc
         matrix mplot = lrstats[,nplot] ~ mtmp ~ self.qq
-        colnames(mplot, "LR-Ratio 90pct. 95pct. 99pct. self.qq")
+        cnameset(mplot, "LR-Ratio 90pct. 95pct. 99pct. self.qq")
 
         if exists(fname)
             string filename = sprintf("%s/ThresholdPanel_CI_No=%d.png",\
