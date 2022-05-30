@@ -2,8 +2,8 @@
 <gretl-functions>
 <gretl-function-package name="Threshold_Panel" needs-panel-data="true" minver="2020b" lives-in-subdir="true">
 <author email="atecon@posteo.de">Artur Tarassow</author>
-<version>2.1</version>
-<date>2021-11-16</date>
+<version>2.2</version>
+<date>2022-05-30</date>
 <description>Panel threshold model of Hansen (JoE, 1999)</description>
 <tags>C23</tags>
 <help>
@@ -126,49 +126,45 @@ hettest          - matrix, test results of no heteroskedasticity
 
 CHANGELOG:
 ----------
-
+2.2 (November 2021)
+  - Fix mismatch in dimension when calling rnameset().
+  - Make sure that coefficient estimates (excl. intercept) are printed.
 2.1 (November 2021)
-- Replace both deprecated functions colnames() and rownames()
-
+  - Replace both deprecated functions colnames() and rownames()
 2.0 (March 2021)
-- Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
-  arguments.
-- Changed API: Rename function lrplot() by plotTpm() and change
-  arguments.
-- Replace &quot;stop&quot; by errorif() function.
-- Fix bug in get_interaction_terms() function for constructing
-  interaction terms.
-- Make use of hdprod() function for computing interaction terms;
-  results in about +20% gain of speed.
-- Internal refactoring and re-formatting (about 5% gain of speed).
-- Update help file.
-- Improve print-out of tests (formatting)
-- Minimum required version is 2020b now.
-
+  - Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
+    arguments.
+  - Changed API: Rename function lrplot() by plotTpm() and change
+    arguments.
+  - Replace &quot;stop&quot; by errorif() function.
+  - Fix bug in get_interaction_terms() function for constructing
+    interaction terms.
+  - Make use of hdprod() function for computing interaction terms;
+    results in about +20% gain of speed.
+  - Internal refactoring and re-formatting (about 5% gain of speed).
+  - Update help file.
+  - Improve print-out of tests (formatting)
+  - Minimum required version is 2020b now.
 1.1 (June 2018)
-- Drop &quot;lrcrit&quot; input for lrplot() -- USER must correct their code!
-- 10%/5%/1% critical values for the LR-test on threshold equality
-(h0: gamma=gamm0) are now plotted as in Hansen (1999)
-- minor improvements and fix of a potential bug in THRESH_SETUP()
-
+  - Drop &quot;lrcrit&quot; input for lrplot() -- USER must correct their code!
+  - 10%/5%/1% critical values for the LR-test on threshold equality
+  (h0: gamma=gamm0) are now plotted as in Hansen (1999)
+  - minor improvements and fix of a potential bug in THRESH_SETUP()
 1.0 (Dez. 2016)
-- Minor corrections
-
+  - Minor corrections
 0.923 (Oct. 2016)
-- Total package revamp
-- Now using gretl's internal panel toolbox
-
+  - Total package revamp
+  - Now using gretl's internal panel toolbox
 0.922 (Mai 2016)
-- Add &quot;sse[qi]= $huge&quot;
-
+  - Add &quot;sse[qi]= $huge&quot;
 0.921 (August 2015)
-- cleaning up the code
-- get rid of the seqa() function
+  - cleaning up the code
+  - get rid of the seqa() function
 0.92 (August 2015)
-- cleaning up the code
-- solve some bugs which let to collinearity issues
-- speeding-up by vectorizing stuff and using internal functions
-- fix bug in the resampling procedure to bootstrap the test statistics
+  - cleaning up the code
+  - solve some bugs which let to collinearity issues
+  - speeding-up by vectorizing stuff and using internal functions
+  - fix bug in the resampling procedure to bootstrap the test statistics
 </help>
 <data-files count="1">
 ThresholdPanel_data_joe99.gdt </data-files>
@@ -745,8 +741,7 @@ printf &quot;***********************************\n&quot;
 printf &quot;\nCoefficient Estimates\n&quot;
 matrix mtmp = beta_lin ~ (beta_lin./sehet_lin) ~ sehomo_lin ~ sehet_lin
 cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
-strings rname = defarray(&quot;Const&quot;)
-rname += strEXO
+strings rname = strEXO
 rname += strREXO
 rnameset(mtmp, rname)
 printf &quot;%12.4f\n&quot;, mtmp

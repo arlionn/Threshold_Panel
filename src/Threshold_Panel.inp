@@ -312,8 +312,7 @@ function void print_linear_model_estimates (const matrix beta_lin,
     matrix mtmp = beta_lin ~ (beta_lin./sehet_lin) ~ sehomo_lin ~ sehet_lin
     cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
 
-    strings rname = defarray("Const")
-    rname += strEXO
+    strings rname = strEXO
     rname += strREXO
     rnameset(mtmp, rname)
 

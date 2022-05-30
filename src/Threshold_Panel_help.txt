@@ -117,46 +117,42 @@ hettest          - matrix, test results of no heteroskedasticity
 
 CHANGELOG:
 ----------
-
+2.2 (November 2021)
+  - Fix mismatch in dimension when calling rnameset().
+  - Make sure that coefficient estimates (excl. intercept) are printed.
 2.1 (November 2021)
-- Replace both deprecated functions colnames() and rownames()
-
+  - Replace both deprecated functions colnames() and rownames()
 2.0 (March 2021)
-- Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
-  arguments.
-- Changed API: Rename function lrplot() by plotTpm() and change
-  arguments.
-- Replace "stop" by errorif() function.
-- Fix bug in get_interaction_terms() function for constructing
-  interaction terms.
-- Make use of hdprod() function for computing interaction terms;
-  results in about +20% gain of speed.
-- Internal refactoring and re-formatting (about 5% gain of speed).
-- Update help file.
-- Improve print-out of tests (formatting)
-- Minimum required version is 2020b now.
-
+  - Changed API: Rename function SETUP_THRESH() to estimateTpm() and change
+    arguments.
+  - Changed API: Rename function lrplot() by plotTpm() and change
+    arguments.
+  - Replace "stop" by errorif() function.
+  - Fix bug in get_interaction_terms() function for constructing
+    interaction terms.
+  - Make use of hdprod() function for computing interaction terms;
+    results in about +20% gain of speed.
+  - Internal refactoring and re-formatting (about 5% gain of speed).
+  - Update help file.
+  - Improve print-out of tests (formatting)
+  - Minimum required version is 2020b now.
 1.1 (June 2018)
-- Drop "lrcrit" input for lrplot() -- USER must correct their code!
-- 10%/5%/1% critical values for the LR-test on threshold equality
-(h0: gamma=gamm0) are now plotted as in Hansen (1999)
-- minor improvements and fix of a potential bug in THRESH_SETUP()
-
+  - Drop "lrcrit" input for lrplot() -- USER must correct their code!
+  - 10%/5%/1% critical values for the LR-test on threshold equality
+  (h0: gamma=gamm0) are now plotted as in Hansen (1999)
+  - minor improvements and fix of a potential bug in THRESH_SETUP()
 1.0 (Dez. 2016)
-- Minor corrections
-
+  - Minor corrections
 0.923 (Oct. 2016)
-- Total package revamp
-- Now using gretl's internal panel toolbox
-
+  - Total package revamp
+  - Now using gretl's internal panel toolbox
 0.922 (Mai 2016)
-- Add "sse[qi]= $huge"
-
+  - Add "sse[qi]= $huge"
 0.921 (August 2015)
-- cleaning up the code
-- get rid of the seqa() function
+  - cleaning up the code
+  - get rid of the seqa() function
 0.92 (August 2015)
-- cleaning up the code
-- solve some bugs which let to collinearity issues
-- speeding-up by vectorizing stuff and using internal functions
-- fix bug in the resampling procedure to bootstrap the test statistics
+  - cleaning up the code
+  - solve some bugs which let to collinearity issues
+  - speeding-up by vectorizing stuff and using internal functions
+  - fix bug in the resampling procedure to bootstrap the test statistics
