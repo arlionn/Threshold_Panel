@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
-<gretl-function-package name="Threshold_Panel" needs-panel-data="true" minver="2020b" lives-in-subdir="true">
+<gretl-function-package name="Threshold_Panel" needs-panel-data="true" minver="2021a" lives-in-subdir="true">
 <author email="atecon@posteo.de">Artur Tarassow</author>
 <version>2.2</version>
-<date>2022-05-30</date>
+<date>2022-06-01</date>
 <description>Panel threshold model of Hansen (JoE, 1999)</description>
 <tags>C23</tags>
 <help>
 This package is an implementation of Bruce E. Hansen's panel-threshold model.
 
 Reference:
-&quot;Threshold effects in non-dynamic panels: Estimation, testing, and inference&quot;, published in Journal of Econometrics 93 (1999) 345-368.
+&quot;Threshold effects in non-dynamic panels: Estimation, testing, and inference&quot;,
+published in Journal of Econometrics 93 (1999) 345-368.
 URL: http://www.ssc.wisc.edu/~bhansen/progs/joe_99.html
 
 
@@ -126,9 +127,13 @@ hettest          - matrix, test results of no heteroskedasticity
 
 CHANGELOG:
 ----------
-2.2 (November 2021)
+2.2 (June 2021)
   - Fix mismatch in dimension when calling rnameset().
-  - Make sure that coefficient estimates (excl. intercept) are printed.
+  - Make sure that coefficient estimates are printed.
+  - Internal clean-up: Make use of the built-in serial correlation test
+    (by Wooldridge) and get rid of the dependency of the
+    &quot;wooldridge_test_serial&quot; package.
+  - Increase version requirement to 2021a
 2.1 (November 2021)
   - Replace both deprecated functions colnames() and rownames()
 2.0 (March 2021)
@@ -168,13 +173,11 @@ CHANGELOG:
 </help>
 <data-files count="1">
 ThresholdPanel_data_joe99.gdt </data-files>
-<depends count="1">
-wooldridge_test_serial </depends>
 <gretl-function name="estimateTpm" type="bundle">
  <params count="5">
   <param name="endo" type="series" const="true"/>
-  <param name="exo" type="list" const="true"/>
-  <param name="rexo" type="list" const="true"/>
+  <param name="exo" type="list"/>
+  <param name="rexo" type="list"/>
   <param name="thresh" type="series" const="true"/>
   <param name="Options" type="bundle" optional="true" const="true"/>
  </params>
@@ -193,6 +196,9 @@ endif
 errorif(self.nthresholds &gt; 2, &quot;Currently only a double threshold model is at maximum supported.&quot;)
 self.trimming_values = vec(self.trimming_values)
 errorif(rows(self.trimming_values) &lt; self.nthresholds, sprintf(&quot;The no. of threshold tests does not equal the no. of \n                    entries in matrix 'self.trimming_values'. Please correct this.&quot;))
+# Add intercept later
+exo -= const
+rexo -= const
 NT = $nobs
 list Lall = endo exo rexo thresh
 smpl Lall --balanced --no-missing # Make sure you have a balanced dataset
@@ -200,8 +206,8 @@ errorif(NT != $nobs, &quot;The panel data set is unbalanced.&quot;)
 self.NT = $nobs        # N*T
 self.N = self.NT / min(pnobs(endo)) # no. of cross-sectional units
 self.T = $pd                  # number time periods (T)
-strEXO = varnames(exo)
-strREXO = varnames(rexo)
+strings names_regime_independent = defarray(&quot;Const&quot;) + varnames(exo)
+strings names_regime_dependent = varnames(rexo)
 nexo = nelem(exo)
 nrexo = nelem(rexo)
 # Prepare matrices to store some stuf for bundle output
@@ -251,7 +257,7 @@ panel endo const exo rexo --fixed-effects @strTF --quiet
 self.sehomo_lin = $stderr
 # FE + HAC robust S.E.
 set pcse off      # set pcse on=Beck-Katz S.E.
-panel endo const exo rexo --fixed-effects --robust @strTF --quiet
+panel endo const exo rexo --fixed-effects --robust @strTF# --quiet
 bundle b = $model
 SSE[1] = $ess
 R2[1] = b.within_rsq
@@ -260,10 +266,10 @@ series e = $uhat
 self.beta_lin = $coeff
 self.sehet_lin = $stderr
 if self.with_timeeffects == TRUE
-  scalar ende = nexo + nrexo - 1
-  self.beta_lin = self.beta_lin[1:ende]
-  self.sehomo_lin = self.sehomo_lin[1:ende]
-  self.sehet_lin = self.sehet_lin[1:ende]
+  scalar n_features = nexo + nrexo
+  self.beta_lin = self.beta_lin[1:n_features]
+  self.sehomo_lin = self.sehomo_lin[1:n_features]
+  self.sehet_lin = self.sehet_lin[1:n_features]
 endif
 # Model specification tests based on HAC robust FE
 modtest --panel --silent
@@ -275,10 +281,10 @@ if self.with_timeeffects == TRUE
   genr timedum
   L1+=dt_*
 endif
-mwool = wooldridge_test_serial(endo, L1, 0)
-sercorr[1,] = mwool[2:]
+modtest --autocorr --silent
+sercorr[1,] = $test ~ $pvalue
 # PRINTOUT LINEAR estimate_and_bootstrap RESULTS
-print_linear_model_estimates(self.beta_lin, self.sehet_lin, self.sehomo_lin, SSE[1], strEXO, strREXO, self.with_timeeffects, R2[1], DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
+print_linear_model_estimates(self.beta_lin, self.sehet_lin, self.sehomo_lin, SSE[1], names_regime_independent, names_regime_dependent, self.with_timeeffects, R2[1], DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
 # Start threshold procedure
 loop lreg=1..self.nthresholds -q    # Loop over specified # of max. thresholds
   # FIRST ITERATION:
@@ -321,7 +327,7 @@ loop lreg=1..self.nthresholds -q    # Loop over specified # of max. thresholds
     sercorr[lreg+1,] = b.sercorr
   endif
   # Print Model
-  print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], strEXO, strREXO, $lreg, 1, self.trimming_values[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], self)
+  print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, names_regime_dependent, $lreg, 1, self.trimming_values[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], self)
   /* SECOND ITERATION: Refinement estimate no bootstrapping needed,
   as critical values are already obtained in first iteration
   NOTE: For the moment, we run the refinement estimation only for
@@ -348,7 +354,7 @@ loop lreg=1..self.nthresholds -q    # Loop over specified # of max. thresholds
     sercorr[lreg+1,] = b.sercorr
     SSE[1+lreg] = b.sse
     R2[1+lreg] = b.r2
-    print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], strEXO, strREXO, $lreg, 2, self.trimming_values[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], self)
+    print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, names_regime_dependent, $lreg, 2, self.trimming_values[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], self)
   endif
   self.beta_indep_T$lreg = beta_indep_T$lreg
   self.sehet_indep_T$lreg = sehet_indep_T$lreg
@@ -619,8 +625,8 @@ if strTF==&quot;--time-dummies&quot;
   genr timedum
   L1+=dt_*
 endif
-mwool = wooldridge_test_serial(endo, L1, 0)
-mout.sercorr = mwool[2:]
+modtest --autocorr --silent
+mout.sercorr = $test ~ $pvalue
 # FE Model + robust S.E.
 panel endo 0 exo INT --fixed-effects --robust @strTF --quiet
 matrix sehet = $stderr
@@ -721,8 +727,8 @@ return mout
   <param name="sehet_lin" type="matrix" const="true"/>
   <param name="sehomo_lin" type="matrix" const="true"/>
   <param name="sse" type="matrix" const="true"/>
-  <param name="strEXO" type="strings" const="true"/>
-  <param name="strREXO" type="strings" const="true"/>
+  <param name="names_regime_independent" type="strings" const="true"/>
+  <param name="names_regime_dependent" type="strings" const="true"/>
   <param name="with_timeeffects" type="int"/>
   <param name="R2" type="scalar"/>
   <param name="DW" type="scalar"/>
@@ -741,9 +747,8 @@ printf &quot;***********************************\n&quot;
 printf &quot;\nCoefficient Estimates\n&quot;
 matrix mtmp = beta_lin ~ (beta_lin./sehet_lin) ~ sehomo_lin ~ sehet_lin
 cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
-strings rname = strEXO
-rname += strREXO
-rnameset(mtmp, rname)
+strings rowlabels = names_regime_independent + names_regime_dependent
+rnameset(mtmp, rowlabels)
 printf &quot;%12.4f\n&quot;, mtmp
 printf &quot;* Sum of Squared Errors: \t%.4f\n&quot;, sse
 printf &quot;* Within R^2: \t\t\t%.4f\n&quot;, R2
@@ -786,8 +791,8 @@ return D
   <param name="lrt" type="matrix" const="true"/>
   <param name="lrcrits" type="matrix" const="true"/>
   <param name="lrprob" type="scalar"/>
-  <param name="strEXO" type="strings" const="true"/>
-  <param name="strREXO" type="strings" const="true"/>
+  <param name="names_regime_independent" type="strings" const="true"/>
+  <param name="names_regime_dependent" type="strings" const="true"/>
   <param name="lreg" type="int"/>
   <param name="iterat" type="int"/>
   <param name="trimming_value" type="scalar"/>
@@ -855,36 +860,35 @@ if iterat == 1
   printf &quot;*******************************************************************************\n&quot;
 endif
 printf &quot;Regime-dependent variable(s): &quot;
-loop i=1..nelem(strREXO) -q
-  printf &quot;%s &quot;, strREXO[i]
+loop i=1..nelem(names_regime_dependent) -q
+  printf &quot;%s &quot;, names_regime_dependent[i]
 endloop
 printf &quot;\n\nRegime-independent Coefficients\n&quot;
 matrix mtmp = beta_indep ~ (beta_indep./sehet_indep) ~ sehomo_indep ~ sehet_indep
 cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
-strings rname = defarray(&quot;Const&quot;)
-rname += strEXO
-rnameset(mtmp, rname)
+strings rowlabels = names_regime_independent
+rnameset(mtmp, rowlabels)
 printf &quot;%12.4f\n&quot;, mtmp
 matrix rsorted = sort(rhats[,2])
 printf &quot;Regime-dependent Coefficients\n&quot;
-strings rname = null
+strings rowlabels = null
 if lreg == 1      # single threshold
-  loop i=1..nelem(strREXO) -q
-    rname += sprintf(&quot;%s*I*(Thresh&lt;=%.3f) &quot;, strREXO[i], rsorted)
-    rname += sprintf(&quot;%s*I*(Thresh&gt;%.3f) &quot;, strREXO[i], rsorted)
+  loop i=1..nelem(names_regime_dependent) -q
+    rowlabels += sprintf(&quot;%s*I*(Thresh&lt;=%.3f) &quot;, names_regime_dependent[i], rsorted)
+    rowlabels += sprintf(&quot;%s*I*(Thresh&gt;%.3f) &quot;, names_regime_dependent[i], rsorted)
   endloop
 elif lreg == 2      # double threshold
-  loop i=1..nelem(strREXO) -q
-    rname += sprintf(&quot;%s*I*(Thresh&lt;=%.3f) &quot;, strREXO[i], rsorted[1])
-    rname += sprintf(&quot;%s*I*(%.3f&lt;Thresh&lt;=%.3f) &quot;, strREXO[i], rsorted[1], rsorted[2])
-    rname += sprintf(&quot;%s*I*(%.3f&lt;Thresh) &quot;, strREXO[i], rsorted[2])
+  loop i=1..nelem(names_regime_dependent) -q
+    rowlabels += sprintf(&quot;%s*I*(Thresh&lt;=%.3f) &quot;, names_regime_dependent[i], rsorted[1])
+    rowlabels += sprintf(&quot;%s*I*(%.3f&lt;Thresh&lt;=%.3f) &quot;, names_regime_dependent[i], rsorted[1], rsorted[2])
+    rowlabels += sprintf(&quot;%s*I*(%.3f&lt;Thresh) &quot;, names_regime_dependent[i], rsorted[2])
   endloop
 elif lreg == 3      # triple threshold -- not yet implemented!
   funcerr &quot;Triple threshold model is not supported. Abort.&quot;
 endif
 matrix mtmp = beta_dep ~ (beta_dep./sehet_dep) ~ sehomo_dep ~ sehet_dep
 cnameset(mtmp, &quot;Coeff t-val(HAC) OLS_SE HAC_SE&quot;)
-rnameset(mtmp,rname)
+rnameset(mtmp, rowlabels)
 printf &quot;%12.4f\n&quot;, mtmp
 if lreg==2 &amp;&amp; iterat==1
 else
@@ -933,9 +937,9 @@ series vala2 = vala^2
 series vala3 = vala^3
 series debtval = debta*vala
 list exo = vala vala2 vala3 debta debtval
-list exo1 = exo(-1)
+list exo1 = lags(1, exo)
 list rexo = cfa
-list rexo1 = lags(1,rexo)
+list rexo1 = lags(1, rexo)
 series thresh = debta(-1)
 list Lall = inva exo1 rexo1 thresh
 
@@ -949,7 +953,7 @@ if REPLICATE_HANSEN90 == 0
 
     # Run the procedure with values to minimize computation time
     bundle opts = _(nthresholds = 1,\
-                    nboot = 99,
+                    nboot = 99,\
                     nquantiles = 99)
     set stopwatch
     bundle Model = estimateTpm(inva, exo1, rexo1, thresh, opts)
@@ -975,7 +979,7 @@ if REPLICATE_HANSEN90 != 0
                     nquantiles = 400,\
                     confidence_level = 0.95,\
                     trimming_values = vec({0.01, 0.01, 0.05}),\
-                    with_timeeffects = 0\
+                    with_timeeffects = 1\
                     )
 
     set stopwatch

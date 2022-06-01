@@ -168,8 +168,8 @@ function bundle estimate_and_bootstrap (const matrix threshold_values,
         genr timedum
         L1+=dt_*
     endif
-    mwool = wooldridge_test_serial(endo, L1, 0)
-    mout.sercorr = mwool[2:]
+    modtest --autocorr --silent
+    mout.sercorr = $test ~ $pvalue
 
     # FE Model + robust S.E.
     panel endo 0 exo INT --fixed-effects --robust @strTF --quiet
@@ -287,17 +287,17 @@ end function
 
 
 function void print_linear_model_estimates (const matrix beta_lin,
-                                          const matrix sehet_lin,
-                                          const matrix sehomo_lin,
-                                          const matrix sse,
-                                          const strings strEXO,
-                                          const strings strREXO,
-                                          int with_timeeffects,
-                                          scalar R2,
-                                          scalar DW,
-                                          const matrix hettest,
-                                          const matrix csdeptest,
-                                          const matrix sercorr)
+                                            const matrix sehet_lin,
+                                            const matrix sehomo_lin,
+                                            const matrix sse,
+                                            const strings names_regime_independent,
+                                            const strings names_regime_dependent,
+                                            int with_timeeffects,
+                                            scalar R2,
+                                            scalar DW,
+                                            const matrix hettest,
+                                            const matrix csdeptest,
+                                            const matrix sercorr)
     /* */
 
     printf "\n***********************************\n"
@@ -312,9 +312,8 @@ function void print_linear_model_estimates (const matrix beta_lin,
     matrix mtmp = beta_lin ~ (beta_lin./sehet_lin) ~ sehomo_lin ~ sehet_lin
     cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
 
-    strings rname = strEXO
-    rname += strREXO
-    rnameset(mtmp, rname)
+    strings rowlabels = names_regime_independent + names_regime_dependent
+    rnameset(mtmp, rowlabels)
 
     printf "%12.4f\n", mtmp
     printf "* Sum of Squared Errors: \t%.4f\n", sse
@@ -361,8 +360,8 @@ function void print_model_estimates (const matrix beta_indep,
                                     const matrix lrt,
                                     const matrix lrcrits,
                                     scalar lrprob,
-                                    const strings strEXO,
-                                    const strings strREXO,
+                                    const strings names_regime_independent,
+                                    const strings names_regime_dependent,
                                     int lreg,
                                     int iterat,
                                     scalar trimming_value,
@@ -442,8 +441,8 @@ function void print_model_estimates (const matrix beta_indep,
     endif
 
     printf "Regime-dependent variable(s): "
-    loop i=1..nelem(strREXO) -q
-        printf "%s ", strREXO[i]
+    loop i=1..nelem(names_regime_dependent) -q
+        printf "%s ", names_regime_dependent[i]
     endloop
 
     printf "\n\nRegime-independent Coefficients\n"
@@ -451,26 +450,25 @@ function void print_model_estimates (const matrix beta_indep,
                   sehomo_indep ~ sehet_indep
 
     cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
-    strings rname = defarray("Const")
-    rname += strEXO
-    rnameset(mtmp, rname)
+    strings rowlabels = names_regime_independent
+    rnameset(mtmp, rowlabels)
     printf "%12.4f\n", mtmp
     matrix rsorted = sort(rhats[,2])
 
     printf "Regime-dependent Coefficients\n"
-    strings rname = null
+    strings rowlabels = null
     if lreg == 1      # single threshold
-        loop i=1..nelem(strREXO) -q
-            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted)
-            rname += sprintf("%s*I*(Thresh>%.3f) ", strREXO[i], rsorted)
+        loop i=1..nelem(names_regime_dependent) -q
+            rowlabels += sprintf("%s*I*(Thresh<=%.3f) ", names_regime_dependent[i], rsorted)
+            rowlabels += sprintf("%s*I*(Thresh>%.3f) ", names_regime_dependent[i], rsorted)
         endloop
 
     elif lreg == 2      # double threshold
-        loop i=1..nelem(strREXO) -q
-            rname += sprintf("%s*I*(Thresh<=%.3f) ", strREXO[i], rsorted[1])
-            rname += sprintf("%s*I*(%.3f<Thresh<=%.3f) ", strREXO[i],\
+        loop i=1..nelem(names_regime_dependent) -q
+            rowlabels += sprintf("%s*I*(Thresh<=%.3f) ", names_regime_dependent[i], rsorted[1])
+            rowlabels += sprintf("%s*I*(%.3f<Thresh<=%.3f) ", names_regime_dependent[i],\
                             rsorted[1], rsorted[2])
-            rname += sprintf("%s*I*(%.3f<Thresh) ", strREXO[i], rsorted[2])
+            rowlabels += sprintf("%s*I*(%.3f<Thresh) ", names_regime_dependent[i], rsorted[2])
         endloop
 
     elif lreg == 3      # triple threshold -- not yet implemented!
@@ -479,7 +477,7 @@ function void print_model_estimates (const matrix beta_indep,
 
     matrix mtmp = beta_dep ~ (beta_dep./sehet_dep) ~ sehomo_dep ~ sehet_dep
     cnameset(mtmp, "Coeff t-val(HAC) OLS_SE HAC_SE")
-    rnameset(mtmp,rname)
+    rnameset(mtmp, rowlabels)
     printf "%12.4f\n", mtmp
 
     if lreg==2 && iterat==1
@@ -502,8 +500,8 @@ end function
 
 
 function bundle estimateTpm (const series endo,
-                             const list exo,
-                             const list rexo,
+                             list exo,
+                             list rexo,
                              const series thresh,
                              const bundle Options[null])
     /* Public main function calling the estimation procedure. */
@@ -532,6 +530,9 @@ function bundle estimateTpm (const series endo,
           sprintf("The no. of threshold tests does not equal the no. of \n\
                    entries in matrix 'self.trimming_values'. Please correct this."))
 
+    # Add intercept later
+    exo -= const
+    rexo -= const
 
     NT = $nobs
     list Lall = endo exo rexo thresh
@@ -542,8 +543,8 @@ function bundle estimateTpm (const series endo,
     self.N = self.NT / min(pnobs(endo)) # no. of cross-sectional units
     self.T = $pd                  # number time periods (T)
 
-    strEXO = varnames(exo)
-    strREXO = varnames(rexo)
+    strings names_regime_independent = defarray("Const") + varnames(exo)
+    strings names_regime_dependent = varnames(rexo)
     nexo = nelem(exo)
     nrexo = nelem(rexo)
 
@@ -602,7 +603,7 @@ function bundle estimateTpm (const series endo,
 
     # FE + HAC robust S.E.
     set pcse off      # set pcse on=Beck-Katz S.E.
-    panel endo const exo rexo --fixed-effects --robust @strTF --quiet
+    panel endo const exo rexo --fixed-effects --robust @strTF# --quiet
 
     bundle b = $model
     SSE[1] = $ess
@@ -613,10 +614,10 @@ function bundle estimateTpm (const series endo,
     self.sehet_lin = $stderr
 
     if self.with_timeeffects == TRUE
-        scalar ende = nexo + nrexo - 1
-        self.beta_lin = self.beta_lin[1:ende]
-        self.sehomo_lin = self.sehomo_lin[1:ende]
-        self.sehet_lin = self.sehet_lin[1:ende]
+        scalar n_features = nexo + nrexo
+        self.beta_lin = self.beta_lin[1:n_features]
+        self.sehomo_lin = self.sehomo_lin[1:n_features]
+        self.sehet_lin = self.sehet_lin[1:n_features]
     endif
 
     # Model specification tests based on HAC robust FE
@@ -631,14 +632,14 @@ function bundle estimateTpm (const series endo,
         genr timedum
         L1+=dt_*
     endif
-    mwool = wooldridge_test_serial(endo, L1, 0)
-    sercorr[1,] = mwool[2:]
+    modtest --autocorr --silent
+    sercorr[1,] = $test ~ $pvalue
 
 
     # PRINTOUT LINEAR estimate_and_bootstrap RESULTS
     print_linear_model_estimates(self.beta_lin, self.sehet_lin,\
-                                 self.sehomo_lin, SSE[1], strEXO,\
-                                 strREXO, self.with_timeeffects, R2[1],\
+                                 self.sehomo_lin, SSE[1], names_regime_independent,\
+                                 names_regime_dependent, self.with_timeeffects, R2[1],\
                                  DW[1], hettest[1,], csdeptest[1,], sercorr[1,])
 
     # Start threshold procedure
@@ -696,8 +697,8 @@ function bundle estimateTpm (const series endo,
         print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
                 sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg,\
                 sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg],\
-                lrtest[lreg], lrcrit[lreg,], lrprob[lreg], strEXO, \
-                strREXO, $lreg, 1, self.trimming_values[lreg], R2[1+lreg],\
+                lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, \
+                names_regime_dependent, $lreg, 1, self.trimming_values[lreg], R2[1+lreg],\
                 DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,],\
                 sercorr[lreg+1,], self)
 
@@ -741,7 +742,7 @@ function bundle estimateTpm (const series endo,
                                   sehet_dep_T$lreg, sehomo_dep_T$lreg,\
                                   rhats[1:lreg,], SSE[1+lreg], lrtest[lreg],\
                                   lrcrit[lreg,], lrprob[lreg],\
-                                  strEXO, strREXO, $lreg, 2,\
+                                  names_regime_independent, names_regime_dependent, $lreg, 2,\
                                   self.trimming_values[lreg], R2[1+lreg],\
                                   DW[1+lreg], hettest[lreg+1,],\
                                   csdeptest[lreg+1,], sercorr[lreg+1,], self)
