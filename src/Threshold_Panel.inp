@@ -547,6 +547,7 @@ function bundle estimateTpm (const series endo,
     strings names_regime_dependent = varnames(rexo)
     nexo = nelem(exo)
     nrexo = nelem(rexo)
+    n_features = nexo + nrexo + 1  # "+1" for the intercept
 
     # Prepare matrices to store some stuf for bundle output
     matrix lrtest = zeros(self.nthresholds, 1)
@@ -603,7 +604,7 @@ function bundle estimateTpm (const series endo,
 
     # FE + HAC robust S.E.
     set pcse off      # set pcse on=Beck-Katz S.E.
-    panel endo const exo rexo --fixed-effects --robust @strTF# --quiet
+    panel endo const exo rexo --fixed-effects --robust @strTF --quiet
 
     bundle b = $model
     SSE[1] = $ess
@@ -614,7 +615,6 @@ function bundle estimateTpm (const series endo,
     self.sehet_lin = $stderr
 
     if self.with_timeeffects == TRUE
-        scalar n_features = nexo + nrexo
         self.beta_lin = self.beta_lin[1:n_features]
         self.sehomo_lin = self.sehomo_lin[1:n_features]
         self.sehet_lin = self.sehet_lin[1:n_features]

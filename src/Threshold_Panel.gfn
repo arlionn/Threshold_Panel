@@ -210,6 +210,7 @@ strings names_regime_independent = defarray(&quot;Const&quot;) + varnames(exo)
 strings names_regime_dependent = varnames(rexo)
 nexo = nelem(exo)
 nrexo = nelem(rexo)
+n_features = nexo + nrexo + 1  # &quot;+1&quot; for the intercept
 # Prepare matrices to store some stuf for bundle output
 matrix lrtest = zeros(self.nthresholds, 1)
 matrix lrprob = zeros(self.nthresholds, 1)    # lr-test prob values: M1|M2|M3
@@ -257,7 +258,7 @@ panel endo const exo rexo --fixed-effects @strTF --quiet
 self.sehomo_lin = $stderr
 # FE + HAC robust S.E.
 set pcse off      # set pcse on=Beck-Katz S.E.
-panel endo const exo rexo --fixed-effects --robust @strTF# --quiet
+panel endo const exo rexo --fixed-effects --robust @strTF --quiet
 bundle b = $model
 SSE[1] = $ess
 R2[1] = b.within_rsq
@@ -266,7 +267,6 @@ series e = $uhat
 self.beta_lin = $coeff
 self.sehet_lin = $stderr
 if self.with_timeeffects == TRUE
-  scalar n_features = nexo + nrexo
   self.beta_lin = self.beta_lin[1:n_features]
   self.sehomo_lin = self.sehomo_lin[1:n_features]
   self.sehet_lin = self.sehet_lin[1:n_features]
