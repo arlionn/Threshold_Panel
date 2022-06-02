@@ -127,7 +127,7 @@ hettest          - matrix, test results of no heteroskedasticity
 
 CHANGELOG:
 ----------
-2.2 (June 2021)
+2.2 (June 2022)
   - Fix mismatch in dimension when calling rnameset().
   - Make sure that coefficient estimates are printed.
   - Internal clean-up: Make use of the built-in serial correlation test
