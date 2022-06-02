@@ -43,4 +43,42 @@ end function
 test_get_interaction_terms(Params)
 
 
+
+
+
+# Run sample script
+#=============================
+open "./src/ThresholdPanel_data_joe99.gdt" --quiet --preserve
+
+# Define a panel dataset + provide meaningful series names
+setobs 15 1:1 --stacked-time-series
+rename v1 inva
+rename v2 vala
+rename v3 cfa
+rename v4 debta
+
+# Set up the series of interest
+list exo = vala debta
+list exo1 = lags(1, exo)
+list rexo = cfa
+list rexo1 = lags(1, rexo)
+series thresh = debta(-1)
+list Lall = inva exo1 rexo1 thresh
+
+# Shrink dataset for illustration purpose only
+smpl 1:01 8:15
+
+# Make sure you have a balanced dataset
+smpl Lall --balanced --no-missing
+
+loop i=1..2
+
+    # Run the procedure with values to minimize computation time
+    bundle opts = _(nthresholds = $i,\
+                    nboot = 49,\
+                    nquantiles = 29)
+    bundle Model = estimateTpm(inva, exo1, rexo1, thresh, opts)
+
+    plotTpm(Model)
+endloop
 printf "\nInfo: All tests passed.\n"
