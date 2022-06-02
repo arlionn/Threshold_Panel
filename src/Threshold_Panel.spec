@@ -1,7 +1,7 @@
 author = Artur Tarassow
 email = atecon@posteo.de
-version = 2.2
-date = 2022-06-01
+version = 2.3
+date = 2022-06-02
 description = Panel threshold model of Hansen (JoE, 1999)
 tags = C23
 min-version = 2021a
