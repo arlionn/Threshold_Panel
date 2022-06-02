@@ -523,6 +523,7 @@ function bundle estimateTpm (const series endo,
       flush
     endif
 
+    errorif(self.nthresholds < 1, "Number of thresholds must be at least 1.")
     errorif(self.nthresholds > 2, "Currently only a double threshold model is at maximum supported.")
 
     self.trimming_values = vec(self.trimming_values)
@@ -694,21 +695,22 @@ function bundle estimateTpm (const series endo,
         endif
 
         # Print Model
-        print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
-                sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg,\
-                sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg],\
-                lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, \
-                names_regime_dependent, $lreg, 1, self.trimming_values[lreg], R2[1+lreg],\
-                DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,],\
-                sercorr[lreg+1,], self)
-
+        if lreg == 1
+            print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg,\
+                    sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg,\
+                    sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg],\
+                    lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, \
+                    names_regime_dependent, $lreg, 1, self.trimming_values[lreg], R2[1+lreg],\
+                    DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,],\
+                    sercorr[lreg+1,], self)
+        endif
 
         /* SECOND ITERATION: Refinement estimate no bootstrapping needed,
         as critical values are already obtained in first iteration
         NOTE: For the moment, we run the refinement estimation only for
         the double threshold model as in Hansen (1999). */
 
-        if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRES. estimate_and_bootstrap ATM!
+        if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRESHOLD estimate_and_bootstrap currently
             # Re-estimate the 1st threshold by conditioning on the latest one
             bundle b = estimate_and_bootstrap(rhats[lreg,2],\
                                               self.trimming_values[lreg],\

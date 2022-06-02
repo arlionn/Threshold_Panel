@@ -193,6 +193,7 @@ if nelem(rexo) &gt; 1
   printf &quot;\nWarning: Currently only a single regime-dependent variable \n                 can be defined in the list named rexo. Please, re-specify\n                 your model.\n&quot;
   flush
 endif
+errorif(self.nthresholds &lt; 1, &quot;Number of thresholds must be at least 1.&quot;)
 errorif(self.nthresholds &gt; 2, &quot;Currently only a double threshold model is at maximum supported.&quot;)
 self.trimming_values = vec(self.trimming_values)
 errorif(rows(self.trimming_values) &lt; self.nthresholds, sprintf(&quot;The no. of threshold tests does not equal the no. of \n                    entries in matrix 'self.trimming_values'. Please correct this.&quot;))
@@ -327,12 +328,14 @@ loop lreg=1..self.nthresholds -q    # Loop over specified # of max. thresholds
     sercorr[lreg+1,] = b.sercorr
   endif
   # Print Model
-  print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, names_regime_dependent, $lreg, 1, self.trimming_values[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], self)
+  if lreg == 1
+    print_model_estimates(beta_indep_T$lreg, sehet_indep_T$lreg, sehomo_indep_T$lreg, beta_dep_T$lreg, sehet_dep_T$lreg, sehomo_dep_T$lreg, rhats[1:lreg,], SSE[1+lreg], lrtest[lreg], lrcrit[lreg,], lrprob[lreg], names_regime_independent, names_regime_dependent, $lreg, 1, self.trimming_values[lreg], R2[1+lreg], DW[1+lreg], hettest[lreg+1,], csdeptest[lreg+1,], sercorr[lreg+1,], self)
+  endif
   /* SECOND ITERATION: Refinement estimate no bootstrapping needed,
   as critical values are already obtained in first iteration
   NOTE: For the moment, we run the refinement estimation only for
   the double threshold model as in Hansen (1999). */
-  if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRES. estimate_and_bootstrap ATM!
+  if lreg == 2 # THIS PART WORKS ONLY FOR THE DOUBLE THRESHOLD estimate_and_bootstrap currently
     # Re-estimate the 1st threshold by conditioning on the latest one
     bundle b = estimate_and_bootstrap(rhats[lreg,2], self.trimming_values[lreg], 0, self.nquantiles, qq1, cc, endo, exo, rexo, thresh, strTF)
     if lrprob[lreg] &lt;= self.alpha
